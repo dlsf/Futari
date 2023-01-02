@@ -1,0 +1,2 @@
+rootProject.name = "Bocchi-chan"
+
