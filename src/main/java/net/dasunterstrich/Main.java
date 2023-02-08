@@ -1,9 +1,9 @@
 package net.dasunterstrich;
 
-import net.dasunterstrich.commands.ModalBanCommand;
-import net.dasunterstrich.listener.ComponentListener;
-import net.dasunterstrich.listener.MessageListener;
-import net.dasunterstrich.listener.SlashCommandListener;
+import net.dasunterstrich.commands.BanCommand;
+import net.dasunterstrich.commands.MuteCommand;
+import net.dasunterstrich.commands.WarnCommand;
+import net.dasunterstrich.commands.internal.CommandManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -15,18 +15,23 @@ import java.nio.file.Path;
 
 public class Main {
     public static void main(String[] args) {
+        var commandManager = new CommandManager();
+
         JDA jda = JDABuilder.createDefault(readToken())
                 .setActivity(Activity.playing("with Bocchicord"))
-                .addEventListeners(new ComponentListener(), new SlashCommandListener(), new MessageListener(), new ModalBanCommand())
+                .addEventListeners(commandManager)
                 .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_BANS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .build();
 
         // TODO: Permissions
+        // TODO: Commands
+        // TODO: Change messages
 
-        jda.updateCommands()
-                .addCommands(RegisterableCommand.BAN.getCommandData())
-                .addCommands(RegisterableCommand.BAN_MODAL.getCommandData())
-                .queue();
+        commandManager.addCommand(new BanCommand());
+        commandManager.addCommand(new MuteCommand());
+        commandManager.addCommand(new WarnCommand());
+
+        jda.updateCommands().addCommands(commandManager.registeredCommands()).queue();
     }
 
     private static String readToken() {
