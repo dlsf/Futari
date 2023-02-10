@@ -15,7 +15,7 @@ public class DiscordUtils {
             var matcher = pattern.matcher(userString);
             matcher.find();
 
-            return Optional.of(guild.retrieveMemberById(matcher.group(1)).timeout(3, TimeUnit.SECONDS).);
+            return Optional.of(guild.retrieveMemberById(matcher.group(1)).timeout(2, TimeUnit.SECONDS).complete());
         } catch (Exception exception) {
             return Optional.empty();
         }
