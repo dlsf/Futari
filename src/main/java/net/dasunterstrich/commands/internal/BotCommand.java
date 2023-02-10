@@ -1,5 +1,6 @@
 package net.dasunterstrich.commands.internal;
 
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -18,10 +19,12 @@ public abstract class BotCommand {
 
     private final String name;
     private final @Nullable String interactionMenuName;
+    private final @Nullable Permission permission;
 
-    public BotCommand(String name, @Nullable String interactionMenuName) {
+    public BotCommand(String name, @Nullable String interactionMenuName, @Nullable Permission permission) {
         this.name = name;
         this.interactionMenuName = interactionMenuName;
+        this.permission = permission;
     }
 
     public String getName() {
@@ -31,5 +34,10 @@ public abstract class BotCommand {
     @Nullable
     public String getInteractionMenuName() {
         return interactionMenuName;
+    }
+
+    @Nullable
+    public Permission getPermission() {
+        return permission;
     }
 }

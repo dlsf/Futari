@@ -1,6 +1,10 @@
 package net.dasunterstrich.commands;
 
 import net.dasunterstrich.commands.internal.BotCommand;
+import net.dasunterstrich.moderation.Punisher;
+import net.dasunterstrich.moderation.ReportedMessage;
+import net.dasunterstrich.utils.DiscordUtils;
+import net.dasunterstrich.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
@@ -17,9 +21,15 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class WarnCommand extends BotCommand {
-    public WarnCommand() {
-        super("warn", "Warn user");
+    private final Punisher punisher;
+
+    public WarnCommand(Punisher punisher) {
+        super("warn", "Warn user", Permission.BAN_MEMBERS);
+
+        this.punisher = punisher;
     }
 
     @Nullable
@@ -54,38 +64,60 @@ public class WarnCommand extends BotCommand {
 
     @Override
     public void onTextCommand(MessageReceivedEvent event) {
-        var author = event.getAuthor();
-        var content = event.getMessage().getContentRaw().split(" ");
+        var words = event.getMessage().getContentRaw().split(" ");
+        if (words.length < 3) {
+            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!warn <User> <Reason>`")).queue();
+            return;
+        }
 
-        event.getChannel().sendMessage(content[1] + " was successfully warned!").queue();
+        var targetMemberOptional = DiscordUtils.parseStringAsMember(event.getGuild(), words[1]);
+        if (targetMemberOptional.isEmpty()) {
+            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Cannot mute, invalid user provided")).queue();
+            return;
+        }
+
+        var targetMember = targetMemberOptional.get();
+        var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
+
+        // TODO: Error handling
+        var warnable = punisher.warn(event.getGuild(), targetMember, event.getMember(), reason, "", ReportedMessage.none());
+
+        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " warned", "**Reason**: " + reason)).queue();
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
-        var targetUser = event.getOption("user").getAsUser();
-        event.reply(targetUser.getAsTag() + " was successfully warned! Case ID: #123").queue();
+        var targetMember = event.getOption("user").getAsMember();
+        var reason = event.getOption("reason").getAsString();
+
+        var commentsOption = event.getOption("comments");
+        var evidenceOption = event.getOption("evidence");
+        var comments = commentsOption == null ? "" : commentsOption.getAsString();
+        var evidence = evidenceOption == null ? ReportedMessage.none() : ReportedMessage.ofEvidence(evidenceOption.getAsAttachment());
+
+        // TODO: Error handling
+        punisher.warn(event.getGuild(), targetMember, event.getMember(), reason, comments, evidence);
+
+        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " warned", "**Reason**: " + reason)).queue();
     }
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         try {
-            var targetUser = event.getJDA().retrieveUserById(event.getModalId().split(":")[1]).complete();
-
+            var targetUser = event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).complete();
             var channel = event.getChannel();
             var message = channel.retrieveMessageById(event.getModalId().split(":")[2]).complete();
-            var messageContent = message.getContentRaw();
-            var messageAttachments = message.getAttachments();
 
             var reason = event.getInteraction().getValue("reason").getAsString();
             var comments = event.getInteraction().getValue("comments").getAsString();
 
-            // TODO
-            // var bannable = Punishments.ban(targetUser, reason, TimeUtils.parseDuration());
+            var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+            if (!warnable) return;
 
-            event.reply(targetUser.getAsTag() + " was successfully warned! Case ID: #123").setEphemeral(true).queue();
+            event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).setEphemeral(true).queue();
         } finally {
             if (!event.isAcknowledged()) {
-                event.reply("An error occurred").setEphemeral(true).queue();
+                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** warned!")).setEphemeral(true).queue();
             }
         }
     }

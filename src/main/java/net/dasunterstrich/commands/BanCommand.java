@@ -1,6 +1,11 @@
 package net.dasunterstrich.commands;
 
 import net.dasunterstrich.commands.internal.BotCommand;
+import net.dasunterstrich.moderation.Punisher;
+import net.dasunterstrich.moderation.ReportedMessage;
+import net.dasunterstrich.utils.DiscordUtils;
+import net.dasunterstrich.utils.DurationUtils;
+import net.dasunterstrich.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
@@ -17,9 +22,15 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class BanCommand extends BotCommand {
-    public BanCommand() {
-        super("ban", "Ban user");
+    private final Punisher punisher;
+
+    public BanCommand(Punisher punisher) {
+        super("ban", "Ban user", Permission.BAN_MEMBERS);
+
+        this.punisher = punisher;
     }
 
     @Nullable
@@ -36,7 +47,7 @@ public class BanCommand extends BotCommand {
     @Nullable
     @Override
     public CommandData getModalCommandData() {
-        return Commands.context(Command.Type.USER, "ban_modal")
+        return Commands.context(Command.Type.MESSAGE, "ban_modal")
                 .setName(getInteractionMenuName())
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS));
     }
@@ -56,39 +67,72 @@ public class BanCommand extends BotCommand {
 
     @Override
     public void onTextCommand(MessageReceivedEvent event) {
-        var author = event.getAuthor();
-        var content = event.getMessage().getContentRaw().split(" ");
+        var words = event.getMessage().getContentRaw().split(" ");
+        if (words.length < 3) {
+            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!ban <User> [Duration] <Reason>`")).queue();
+            return;
+        }
 
-        event.getChannel().sendMessage(content[1] + " was successfully banned!").queue();
+        var targetMemberOptional = DiscordUtils.parseStringAsMember(event.getGuild(), words[1]);
+        if (targetMemberOptional.isEmpty()) {
+            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Cannot ban, invalid user provided")).queue();
+            return;
+        }
+
+        var targetMember = targetMemberOptional.get();
+        String reason;
+
+        var duration = words[2];
+        if (DurationUtils.isValidDurationString(duration)) {
+            reason = String.join(" ", Arrays.copyOfRange(words, 3, words.length));
+        } else {
+            reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
+            duration = "";
+        }
+
+        // TODO: Error handling
+        var bannable = punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, "", ReportedMessage.none());
+        if (!bannable) return;
+
+        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was banned", "**Reason**: " + reason)).queue();
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
-        var targetUser = event.getOption("user").getAsUser();
-        event.reply(targetUser.getAsTag() + " was successfully banned! Case ID: #123").queue();
+        var targetMember = event.getOption("user").getAsMember();
+        var reason = event.getOption("reason").getAsString();
+
+        var commentsOption = event.getOption("comments");
+        var evidenceOption = event.getOption("evidence");
+        var durationOption = event.getOption("duration");
+        var comments = commentsOption == null ? "" : commentsOption.getAsString();
+        var evidence = evidenceOption == null ? ReportedMessage.none() : ReportedMessage.ofEvidence(evidenceOption.getAsAttachment());
+        var duration = durationOption == null ? "" : durationOption.getAsString();
+
+        // TODO: Error handling
+        punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidence);
+
+        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " banned", "**Reason**: " + reason)).queue();
     }
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         try {
-            var targetUser = event.getJDA().retrieveUserById(event.getModalId().split(":")[1]).complete();
-
+            var targetUser = event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).complete();
             var channel = event.getChannel();
             var message = channel.retrieveMessageById(event.getModalId().split(":")[2]).complete();
-            var messageContent = message.getContentRaw();
-            var messageAttachments = message.getAttachments();
 
             var reason = event.getInteraction().getValue("reason").getAsString();
             var duration = event.getInteraction().getValue("duration").getAsString();
             var comments = event.getInteraction().getValue("comments").getAsString();
 
-            // TODO
-            // var bannable = Punishments.ban(targetUser, reason, TimeUtils.parseDuration());
+            var bannable = punisher.ban(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+            if (!bannable) return;
 
-            event.reply(targetUser.getAsTag() + " was successfully banned! Case ID: #123").setEphemeral(true).queue();
+            event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was banned. **Reason**: " + reason)).setEphemeral(true).queue();
         } finally {
             if (!event.isAcknowledged()) {
-                event.reply("An error occurred").setEphemeral(true).queue();
+                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** banned!")).setEphemeral(true).queue();
             }
         }
     }

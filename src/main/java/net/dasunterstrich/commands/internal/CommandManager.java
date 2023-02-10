@@ -30,36 +30,48 @@ public class CommandManager extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
+        if (!event.isFromGuild()) return;
+
         var executedCommand = commands.stream().filter(command -> event.getFullCommandName().equalsIgnoreCase(command.getName())).findAny();
         if (executedCommand.isEmpty()) return;
+
+        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         executedCommand.get().onSlashCommand(event);
     }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if (!event.getChannelType().isGuild()) return;
+        if (!event.getChannelType().isGuild() || event.isWebhookMessage()) return;
 
         var executedCommand = commands.stream().filter(command -> ("!" + command.getName()).equalsIgnoreCase(event.getMessage().getContentRaw().split(" ")[0])).findAny();
         if (executedCommand.isEmpty()) return;
 
-        // TODO: Permissions
+        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         executedCommand.get().onTextCommand(event);
     }
 
     @Override
     public void onMessageContextInteraction(MessageContextInteractionEvent event) {
+        if (!event.isFromGuild()) return;
+
         var executedCommand = commands.stream().filter(command -> event.getName().equals(command.getInteractionMenuName())).findAny();
         if (executedCommand.isEmpty()) return;
+
+        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         event.replyModal(executedCommand.get().buildModal(event)).queue();
     }
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
+        if (!event.isFromGuild()) return;
+
         var executedCommand = commands.stream().filter(command -> event.getModalId().startsWith(command.getName() + ":")).findAny();
         if (executedCommand.isEmpty()) return;
+
+        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         executedCommand.get().onModalInteraction(event);
     }
