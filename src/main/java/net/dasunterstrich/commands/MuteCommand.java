@@ -118,19 +118,21 @@ public class MuteCommand extends BotCommand {
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         try {
-            var targetUser = event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).complete();
-            var channel = event.getChannel();
-            var message = channel.retrieveMessageById(event.getModalId().split(":")[2]).complete();
+            event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetUser -> {
+                var channel = event.getChannel();
+                channel.retrieveMessageById(event.getModalId().split(":")[2]).queue(message -> {
+                    var reason = event.getInteraction().getValue("reason").getAsString();
+                    var duration = event.getInteraction().getValue("duration").getAsString();
+                    var comments = event.getInteraction().getValue("comments").getAsString();
 
-            var reason = event.getInteraction().getValue("reason").getAsString();
-            var duration = event.getInteraction().getValue("duration").getAsString();
-            var comments = event.getInteraction().getValue("comments").getAsString();
+                    // TODO: Error handling
+                    var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+                    if (!muteable) return;
 
-            // TODO: Error handling
-            var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
-            if (!muteable) return;
+                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).setEphemeral(true).queue();
+                });
+            });
 
-            event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).setEphemeral(true).queue();
         } finally {
             if (!event.isAcknowledged()) {
                 event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** muted!")).setEphemeral(true).queue();

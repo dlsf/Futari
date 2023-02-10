@@ -104,17 +104,19 @@ public class WarnCommand extends BotCommand {
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         try {
-            var targetUser = event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).complete();
-            var channel = event.getChannel();
-            var message = channel.retrieveMessageById(event.getModalId().split(":")[2]).complete();
+            event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetUser -> {
+                var channel = event.getChannel();
+                channel.retrieveMessageById(event.getModalId().split(":")[2]).queue(message -> {
+                    var reason = event.getInteraction().getValue("reason").getAsString();
+                    var comments = event.getInteraction().getValue("comments").getAsString();
 
-            var reason = event.getInteraction().getValue("reason").getAsString();
-            var comments = event.getInteraction().getValue("comments").getAsString();
+                    var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+                    if (!warnable) return;
 
-            var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
-            if (!warnable) return;
+                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).setEphemeral(true).queue();
+                });
+            });
 
-            event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).setEphemeral(true).queue();
         } finally {
             if (!event.isAcknowledged()) {
                 event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** warned!")).setEphemeral(true).queue();

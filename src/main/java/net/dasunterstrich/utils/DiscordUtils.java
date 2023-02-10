@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 public class DiscordUtils {
@@ -14,7 +15,7 @@ public class DiscordUtils {
             var matcher = pattern.matcher(userString);
             matcher.find();
 
-            return Optional.of(guild.retrieveMemberById(matcher.group(1)).complete());
+            return Optional.of(guild.retrieveMemberById(matcher.group(1)).timeout(3, TimeUnit.SECONDS).);
         } catch (Exception exception) {
             return Optional.empty();
         }

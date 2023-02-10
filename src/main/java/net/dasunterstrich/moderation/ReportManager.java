@@ -53,10 +53,13 @@ public class ReportManager {
     }
 
     private void createReportThread(User user) {
-        var post = guild.getForumChannelById(1073212604090167357L).createForumPost(user.getAsTag() + " (" + user.getIdLong() + ")", MessageCreateData.fromContent("New Report")).complete();
-        reportThreads.put(user.getIdLong(), post.getThreadChannel().getIdLong());
+        // TODO: Replace complete if possible or add timeout
+        guild.getForumChannelById(1073212604090167357L).createForumPost(user.getAsTag() + " (" + user.getIdLong() + ")", MessageCreateData.fromContent("New Report"))
+                .queue(forumPost -> {
+                    reportThreads.put(user.getIdLong(), forumPost.getThreadChannel().getIdLong());
 
-        // TODO: Add to database
+                    // TODO: Add to database
+                });
     }
 
     private String buildTitle(Report report) {

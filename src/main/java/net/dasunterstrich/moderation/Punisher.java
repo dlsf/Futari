@@ -90,7 +90,7 @@ public class Punisher {
         try {
             user.openPrivateChannel()
                     .flatMap(privateChannel -> privateChannel.sendMessageEmbeds(embed))
-                    .timeout(3, TimeUnit.SECONDS)
+                    .timeout(2, TimeUnit.SECONDS)
                     .complete();
         } catch (Exception exception) {
             // When the bot doesn't share a guild with the user etc just treat it as a failed contact attempt
