@@ -1,9 +1,11 @@
 package net.dasunterstrich.futari;
 
+import com.zaxxer.hikari.HikariDataSource;
 import net.dasunterstrich.futari.commands.BanCommand;
 import net.dasunterstrich.futari.commands.MuteCommand;
 import net.dasunterstrich.futari.commands.WarnCommand;
 import net.dasunterstrich.futari.commands.internal.CommandManager;
+import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.moderation.Punisher;
 import net.dasunterstrich.futari.moderation.ReportManager;
 import net.dasunterstrich.futari.listener.ChannelCreateListener;
@@ -15,13 +17,19 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.sql.SQLException;
 
 public class Main {
+    static Logger logger = LoggerFactory.getLogger(Main.class);
+
     public static void main(String[] args) {
+        var databaseHandler = initializeDatabase();
         var commandManager = new CommandManager();
 
         JDA jda = JDABuilder.createDefault(readToken())
@@ -52,19 +60,31 @@ public class Main {
         commandManager.addCommand(new WarnCommand(punisher));
 
         jda.updateCommands().addCommands(commandManager.registeredCommands()).queue();
+        logger.info("Commands initialized");
     }
 
     private static String readToken() {
         try {
             return Files.readAllLines(Path.of("token.txt")).get(0);
         } catch (IOException e) {
-            System.out.println("Token not found, please create a token.txt");
+            logger.error("Token not found, please create a token.txt");
             throw new RuntimeException(e);
         }
     }
 
-    private static void initializeDatabase() {
+    private static DatabaseHandler initializeDatabase() {
+        var databaseHandler = new DatabaseHandler();
+        databaseHandler.initializeConnectionPool();
 
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                databaseHandler.closeDataSource();
+                logger.info("Database connection shutdown!");
+            }
+        });
+
+        logger.info("Database connection established!");
+        return databaseHandler;
     }
-
 }
