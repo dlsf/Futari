@@ -1,25 +1,43 @@
 package net.dasunterstrich.futari.moderation;
 
+import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class ReportManager {
-
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ExecutorService executorService = Executors.newScheduledThreadPool(3);
+    private final DatabaseHandler databaseHandler;
     private final Map<Long, Long> reportThreads = new ConcurrentHashMap<>();
     private Guild guild;
 
-    public ReportManager() {
-        // TODO: Load from database
+    public ReportManager(DatabaseHandler databaseHandler) {
+        this.databaseHandler = databaseHandler;
+
+        try (var connection = databaseHandler.getConnection(); var statement = connection.createStatement()) {
+            var resultSet = statement.executeQuery("SELECT * FROM ReportThreads");
+            while (resultSet.next()) {
+                var userId = resultSet.getLong("user_id");
+                var threadId = resultSet.getLong("thread_id");
+                reportThreads.put(userId, threadId);
+            }
+        } catch (Exception exception) {
+            logger.error("Failed to load report threads", exception);
+        }
+
+        logger.info("Loaded report threads successfully");
     }
 
     public void setGuild(Guild guild) {
@@ -53,13 +71,29 @@ public class ReportManager {
     }
 
     private void createReportThread(User user) {
-        // TODO: Replace complete if possible or add timeout
-        guild.getForumChannelById(1073212604090167357L).createForumPost(user.getAsTag() + " (" + user.getIdLong() + ")", MessageCreateData.fromContent("New Report"))
-                .queue(forumPost -> {
-                    reportThreads.put(user.getIdLong(), forumPost.getThreadChannel().getIdLong());
+        var forumPost = guild.getForumChannelById(1073212604090167357L).createForumPost(user.getAsTag() + " (" + user.getIdLong() + ")", MessageCreateData.fromContent("New Report"))
+                .timeout(2, TimeUnit.SECONDS)
+                .complete();
 
-                    // TODO: Add to database
-                });
+        var userId = user.getIdLong();
+        var threadId = forumPost.getThreadChannel().getIdLong();
+
+        reportThreads.put(userId, threadId);
+        addThreadToDatabase(userId, threadId);
+    }
+
+    private void addThreadToDatabase(long userId, long threadId) {
+        try (var connection = databaseHandler.getConnection()) {
+            var statement = connection.prepareStatement("INSERT INTO ReportThreads (user_id, thread_id) VALUES (?, ?)");
+
+            statement.setLong(1, userId);
+            statement.setLong(2, threadId);
+
+            statement.execute();
+            statement.close();
+        } catch (Exception exception) {
+            logger.error("Error while inserting thread data", exception);
+        }
     }
 
     private String buildTitle(Report report) {

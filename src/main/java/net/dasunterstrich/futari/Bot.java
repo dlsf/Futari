@@ -37,7 +37,7 @@ public class Bot {
                 .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_BANS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .build();
 
-        var reportManager = new ReportManager();
+        var reportManager = new ReportManager(databaseHandler);
         var punisher = new Punisher(reportManager);
 
         jda.addEventListener(new ListenerAdapter() {
@@ -72,7 +72,7 @@ public class Bot {
 
     private DatabaseHandler initializeDatabase() {
         var databaseHandler = new DatabaseHandler();
-        databaseHandler.initializeConnectionPool();
+        databaseHandler.initializeDatabase();
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
