@@ -58,6 +58,7 @@ public class Punisher {
         // Thread update
         var report = new Report(ReportType.BAN, member.getUser(), moderator.getUser(), reason, comments);
         report.setDuration(duration);
+        report.setReportedMessage(reportedMessage);
         reportManager.createReport(member.getUser(), report);
 
         // Database Update
@@ -95,6 +96,7 @@ public class Punisher {
         // Thread update
         var report = new Report(ReportType.MUTE, member.getUser(), moderator.getUser(), reason, comments);
         report.setDuration(duration);
+        report.setReportedMessage(reportedMessage);
         reportManager.createReport(member.getUser(), report);
 
         // Database Update
@@ -141,6 +143,7 @@ public class Punisher {
 
         // Thread update
         var report = new Report(ReportType.WARN, member.getUser(), moderator.getUser(), reason, comments);
+        report.setReportedMessage(reportedMessage);
         reportManager.createReport(member.getUser(), report);
 
         // Database Update

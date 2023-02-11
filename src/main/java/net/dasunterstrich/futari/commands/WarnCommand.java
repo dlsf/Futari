@@ -103,6 +103,8 @@ public class WarnCommand extends BotCommand {
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
+        event.deferReply(true).queue();
+
         try {
             event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetUser -> {
                 var channel = event.getChannel();
@@ -113,7 +115,7 @@ public class WarnCommand extends BotCommand {
                     var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
                     if (!warnable.success()) return;
 
-                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).setEphemeral(true).queue();
+                    event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).queue();
                 });
             });
 

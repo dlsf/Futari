@@ -6,6 +6,7 @@ import net.dasunterstrich.futari.commands.WarnCommand;
 import net.dasunterstrich.futari.commands.internal.CommandManager;
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.listener.ChannelCreateListener;
+import net.dasunterstrich.futari.listener.GuildMemberJoinListener;
 import net.dasunterstrich.futari.moderation.Punisher;
 import net.dasunterstrich.futari.moderation.TimedPunishmentHandler;
 import net.dasunterstrich.futari.reports.ReportManager;
@@ -33,7 +34,7 @@ public class Bot {
 
         JDA jda = JDABuilder.createDefault(readToken())
                 .setActivity(Activity.playing("with Bocchicord"))
-                .addEventListeners(commandManager, new ChannelCreateListener())
+                .addEventListeners(commandManager, new ChannelCreateListener(), new GuildMemberJoinListener(databaseHandler))
                 .setMemberCachePolicy(MemberCachePolicy.ONLINE)
                 .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_BANS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .build();
@@ -50,14 +51,15 @@ public class Bot {
             }
         });
 
-        // TODO: Consistent parameters (nullability)
-        // TODO: Add all commands
-        // TODO: Automatically remove punishments
+        // TODO: Add all commands (+ help)
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans
         // TODO: Ban message deletion argument
-        // TODO: Handle rejoins when muted
         // TODO: Split Punisher
+        // TODO: Warn if can't punish user
+        // TODO: Alt linking
+        // TODO: Right-click user interactions
+        // TODO: Message attachments
 
         commandManager.addCommand(new BanCommand(punisher));
         commandManager.addCommand(new MuteCommand(punisher));

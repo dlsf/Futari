@@ -45,6 +45,8 @@ public class ReportManager {
     }
 
     public void createReport(User user, Report report) {
+        if (report.getReason().equals("Auto")) return;
+
         executorService.execute(() -> {
             if (!hasReportThread(user)) createReportThread(user);
 
@@ -61,8 +63,10 @@ public class ReportManager {
                             .build()
             ).queue();
 
-            // TODO: Database stuff, reminders
-            //thread.sendMessage("Report Type: " + report.getReportType().getName() + "\nReason: " + report.getReason() + "\nComments: " + report.getComments()).queue();
+            // TODO: Reminders
+            if (report.getReportedMessage().messageContent() == null && report.getReportedMessage().messageAttachments().isEmpty()) {
+                thread.sendMessage(report.getModerator().getAsMention() + "Please post the evidence for this punishment").queue();
+            }
         });
     }
 
@@ -120,6 +124,10 @@ public class ReportManager {
 
         if (!report.getComments().isEmpty()) {
             stringBuilder.append("\n**Comments**: ").append(report.getComments());
+        }
+
+        if (report.getReportedMessage().messageContent() != null) {
+            stringBuilder.append("\n**Reported Message**: \n> ").append(report.getReportedMessage().messageContent());
         }
 
         return stringBuilder.toString();

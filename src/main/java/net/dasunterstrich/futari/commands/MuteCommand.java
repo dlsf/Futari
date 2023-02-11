@@ -118,6 +118,8 @@ public class MuteCommand extends BotCommand {
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         try {
+            event.deferReply(true).queue();
+
             event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetUser -> {
                 var channel = event.getChannel();
                 channel.retrieveMessageById(event.getModalId().split(":")[2]).queue(message -> {
@@ -129,7 +131,7 @@ public class MuteCommand extends BotCommand {
                     var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
                     if (!muteable.success()) return;
 
-                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).setEphemeral(true).queue();
+                    event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).queue();
                 });
             });
 
