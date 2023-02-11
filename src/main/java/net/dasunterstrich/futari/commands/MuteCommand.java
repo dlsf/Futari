@@ -1,11 +1,11 @@
 package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
+import net.dasunterstrich.futari.moderation.Punisher;
 import net.dasunterstrich.futari.moderation.ReportedMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
-import net.dasunterstrich.futari.moderation.Punisher;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
