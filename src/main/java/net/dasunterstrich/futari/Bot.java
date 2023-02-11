@@ -7,7 +7,8 @@ import net.dasunterstrich.futari.commands.internal.CommandManager;
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.listener.ChannelCreateListener;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.moderation.ReportManager;
+import net.dasunterstrich.futari.moderation.TimedPunishmentHandler;
+import net.dasunterstrich.futari.reports.ReportManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -38,12 +39,14 @@ public class Bot {
                 .build();
 
         var reportManager = new ReportManager(databaseHandler);
-        var punisher = new Punisher(reportManager);
+        var punisher = new Punisher(databaseHandler, reportManager);
 
         jda.addEventListener(new ListenerAdapter() {
             @Override
             public void onReady(@NotNull ReadyEvent event) {
-                reportManager.setGuild(jda.getGuildById(497092213034188806L));
+                var guild = jda.getGuildById(497092213034188806L);
+                reportManager.setGuild(guild);
+                new TimedPunishmentHandler(databaseHandler, punisher, jda, guild);
             }
         });
 
@@ -52,6 +55,9 @@ public class Bot {
         // TODO: Automatically remove punishments
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans
+        // TODO: Ban message deletion argument
+        // TODO: Handle rejoins when muted
+        // TODO: Split Punisher
 
         commandManager.addCommand(new BanCommand(punisher));
         commandManager.addCommand(new MuteCommand(punisher));

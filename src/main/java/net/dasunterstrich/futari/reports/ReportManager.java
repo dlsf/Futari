@@ -1,4 +1,4 @@
-package net.dasunterstrich.futari.moderation;
+package net.dasunterstrich.futari.reports;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.utils.DurationUtils;

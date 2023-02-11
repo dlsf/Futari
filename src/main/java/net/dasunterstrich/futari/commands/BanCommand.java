@@ -2,7 +2,7 @@ package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.moderation.ReportedMessage;
+import net.dasunterstrich.futari.reports.ReportedMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
@@ -92,7 +92,7 @@ public class BanCommand extends BotCommand {
 
         // TODO: Error handling
         var bannable = punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, "", ReportedMessage.none());
-        if (!bannable) return;
+        if (!bannable.success()) return;
 
         event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was banned", "**Reason**: " + reason)).queue();
     }
@@ -126,7 +126,7 @@ public class BanCommand extends BotCommand {
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
                     var bannable = punisher.ban(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
-                    if (!bannable) return;
+                    if (!bannable.success()) return;
 
                     event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was banned. **Reason**: " + reason)).setEphemeral(true).queue();
                 });

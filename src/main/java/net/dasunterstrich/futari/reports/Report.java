@@ -1,4 +1,4 @@
-package net.dasunterstrich.futari.moderation;
+package net.dasunterstrich.futari.reports;
 
 import net.dv8tion.jda.api.entities.User;
 

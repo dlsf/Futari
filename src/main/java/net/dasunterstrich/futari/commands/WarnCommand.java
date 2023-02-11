@@ -2,7 +2,7 @@ package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.moderation.ReportedMessage;
+import net.dasunterstrich.futari.reports.ReportedMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
@@ -111,7 +111,7 @@ public class WarnCommand extends BotCommand {
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
                     var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
-                    if (!warnable) return;
+                    if (!warnable.success()) return;
 
                     event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).setEphemeral(true).queue();
                 });

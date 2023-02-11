@@ -1,4 +1,4 @@
-package net.dasunterstrich.futari.moderation;
+package net.dasunterstrich.futari.reports;
 
 import java.awt.*;
 
@@ -6,7 +6,9 @@ public enum ReportType {
 
     BAN("Ban", Color.RED),
     MUTE("Mute", Color.GRAY),
-    WARN("Warn", Color.YELLOW);
+    WARN("Warn", Color.YELLOW),
+    UNBAN("Unban", Color.GREEN),
+    UNMUTE("Unmute", Color.GREEN);
 
     private final String name;
     private final Color color;
