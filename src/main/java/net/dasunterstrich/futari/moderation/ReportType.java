@@ -1,4 +1,4 @@
-package net.dasunterstrich.moderation;
+package net.dasunterstrich.futari.moderation;
 
 import java.awt.*;
 

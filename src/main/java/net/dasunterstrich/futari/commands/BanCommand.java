@@ -1,11 +1,11 @@
-package net.dasunterstrich.commands;
+package net.dasunterstrich.futari.commands;
 
-import net.dasunterstrich.commands.internal.BotCommand;
-import net.dasunterstrich.moderation.Punisher;
-import net.dasunterstrich.moderation.ReportedMessage;
-import net.dasunterstrich.utils.DiscordUtils;
-import net.dasunterstrich.utils.DurationUtils;
-import net.dasunterstrich.utils.EmbedUtils;
+import net.dasunterstrich.futari.commands.internal.BotCommand;
+import net.dasunterstrich.futari.moderation.ReportedMessage;
+import net.dasunterstrich.futari.utils.DiscordUtils;
+import net.dasunterstrich.futari.utils.DurationUtils;
+import net.dasunterstrich.futari.utils.EmbedUtils;
+import net.dasunterstrich.futari.moderation.Punisher;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
@@ -24,11 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class MuteCommand extends BotCommand {
+public class BanCommand extends BotCommand {
     private final Punisher punisher;
 
-    public MuteCommand(Punisher punisher) {
-        super("mute", "Mute user", Permission.BAN_MEMBERS);
+    public BanCommand(Punisher punisher) {
+        super("ban", "Ban user", Permission.BAN_MEMBERS);
 
         this.punisher = punisher;
     }
@@ -36,10 +36,10 @@ public class MuteCommand extends BotCommand {
     @Nullable
     @Override
     public CommandData getCommandData() {
-        return Commands.slash("mute", "Mute a user")
-                .addOption(OptionType.USER, "user", "The user to mute", true)
-                .addOption(OptionType.STRING, "reason", "Reason for the mute", true)
-                .addOption(OptionType.STRING, "duration", "Duration of the mute", false)
+        return Commands.slash("ban", "Ban a user")
+                .addOption(OptionType.USER, "user", "The user to ban", true)
+                .addOption(OptionType.STRING, "reason", "Reason for the ban", true)
+                .addOption(OptionType.STRING, "duration", "Duration of the ban", false)
                 .addOption(OptionType.STRING, "comments", "Further comments for other moderators", false)
                 .addOption(OptionType.ATTACHMENT, "evidence", "Screenshot of additional evidence", false);
     }
@@ -47,7 +47,7 @@ public class MuteCommand extends BotCommand {
     @Nullable
     @Override
     public CommandData getModalCommandData() {
-        return Commands.context(Command.Type.MESSAGE, "mute_modal")
+        return Commands.context(Command.Type.MESSAGE, "ban_modal")
                 .setName(getInteractionMenuName())
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS));
     }
@@ -58,7 +58,7 @@ public class MuteCommand extends BotCommand {
         var message = event.getTarget();
         var author = message.getAuthor();
 
-        return Modal.create("mute:" + author.getId() + ":" + message.getId(), "Mute " + author.getAsTag())
+        return Modal.create("ban:" + author.getId() + ":" + message.getId(), "Ban " + author.getAsTag())
                 .addActionRows(ActionRow.of(TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH).setPlaceholder("Reason").setRequired(true).build()))
                 .addActionRows(ActionRow.of(TextInput.create("duration", "Duration (e.g. 3d)", TextInputStyle.SHORT).setPlaceholder("Duration").setRequired(false).build()))
                 .addActionRows(ActionRow.of(TextInput.create("comments", "Further comments", TextInputStyle.PARAGRAPH).setPlaceholder("Comments").setRequired(false).build()))
@@ -69,13 +69,13 @@ public class MuteCommand extends BotCommand {
     public void onTextCommand(MessageReceivedEvent event) {
         var words = event.getMessage().getContentRaw().split(" ");
         if (words.length < 3) {
-            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!mute <User> [Duration] <Reason>`")).queue();
+            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!ban <User> [Duration] <Reason>`")).queue();
             return;
         }
 
         var targetMemberOptional = DiscordUtils.parseStringAsMember(event.getGuild(), words[1]);
         if (targetMemberOptional.isEmpty()) {
-            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Cannot mute, invalid user provided")).queue();
+            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Cannot ban, invalid user provided")).queue();
             return;
         }
 
@@ -91,10 +91,10 @@ public class MuteCommand extends BotCommand {
         }
 
         // TODO: Error handling
-        var muteable = punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, "", ReportedMessage.none());
-        if (!muteable) return;
+        var bannable = punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, "", ReportedMessage.none());
+        if (!bannable) return;
 
-        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was muted", "**Reason**: " + reason)).queue();
+        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was banned", "**Reason**: " + reason)).queue();
     }
 
     @Override
@@ -110,9 +110,9 @@ public class MuteCommand extends BotCommand {
         var duration = durationOption == null ? "" : durationOption.getAsString();
 
         // TODO: Error handling
-        punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidence);
+        punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidence);
 
-        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " muted", "**Reason**: " + reason)).queue();
+        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " banned", "**Reason**: " + reason)).queue();
     }
 
     @Override
@@ -125,17 +125,15 @@ public class MuteCommand extends BotCommand {
                     var duration = event.getInteraction().getValue("duration").getAsString();
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
-                    // TODO: Error handling
-                    var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
-                    if (!muteable) return;
+                    var bannable = punisher.ban(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+                    if (!bannable) return;
 
-                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).setEphemeral(true).queue();
+                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was banned. **Reason**: " + reason)).setEphemeral(true).queue();
                 });
             });
-
         } finally {
             if (!event.isAcknowledged()) {
-                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** muted!")).setEphemeral(true).queue();
+                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** banned!")).setEphemeral(true).queue();
             }
         }
     }

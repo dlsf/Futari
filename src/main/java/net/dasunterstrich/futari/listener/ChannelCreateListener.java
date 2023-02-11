@@ -1,4 +1,4 @@
-package net.dasunterstrich.listener;
+package net.dasunterstrich.futari.listener;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel;

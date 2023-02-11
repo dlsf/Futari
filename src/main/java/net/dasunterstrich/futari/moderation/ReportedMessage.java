@@ -1,4 +1,4 @@
-package net.dasunterstrich.moderation;
+package net.dasunterstrich.futari.moderation;
 
 import net.dv8tion.jda.api.entities.Message;
 import org.jetbrains.annotations.Nullable;

@@ -1,12 +1,12 @@
-package net.dasunterstrich;
+package net.dasunterstrich.futari;
 
-import net.dasunterstrich.commands.BanCommand;
-import net.dasunterstrich.commands.MuteCommand;
-import net.dasunterstrich.commands.WarnCommand;
-import net.dasunterstrich.commands.internal.CommandManager;
-import net.dasunterstrich.listener.ChannelCreateListener;
-import net.dasunterstrich.moderation.Punisher;
-import net.dasunterstrich.moderation.ReportManager;
+import net.dasunterstrich.futari.commands.BanCommand;
+import net.dasunterstrich.futari.commands.MuteCommand;
+import net.dasunterstrich.futari.commands.WarnCommand;
+import net.dasunterstrich.futari.commands.internal.CommandManager;
+import net.dasunterstrich.futari.moderation.Punisher;
+import net.dasunterstrich.futari.moderation.ReportManager;
+import net.dasunterstrich.futari.listener.ChannelCreateListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -44,7 +44,6 @@ public class Main {
         // TODO: Consistent parameters (nullability)
         // TODO: Add all commands
         // TODO: Automatically remove punishments
-        // TODO: DM users
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans
 
@@ -62,6 +61,10 @@ public class Main {
             System.out.println("Token not found, please create a token.txt");
             throw new RuntimeException(e);
         }
+    }
+
+    private static void initializeDatabase() {
+
     }
 
 }

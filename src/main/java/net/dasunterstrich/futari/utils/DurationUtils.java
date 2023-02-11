@@ -1,4 +1,4 @@
-package net.dasunterstrich.utils;
+package net.dasunterstrich.futari.utils;
 
 import java.util.regex.Pattern;
 

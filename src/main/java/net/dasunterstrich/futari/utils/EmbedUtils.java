@@ -1,4 +1,4 @@
-package net.dasunterstrich.utils;
+package net.dasunterstrich.futari.utils;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;

@@ -1,4 +1,4 @@
-package net.dasunterstrich.commands.internal;
+package net.dasunterstrich.futari.commands.internal;
 
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;

@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "net.dasunterstrich"
@@ -10,11 +11,13 @@ repositories {
 }
 
 dependencies {
+    implementation("com.zaxxer:HikariCP:5.0.1")
+    implementation("org.xerial:sqlite-jdbc:3.40.0.0")
     implementation("net.dv8tion:JDA:5.0.0-beta.2") {
         exclude("opus-java")
     }
 }
 
-tasks.getByName<Test>("test") {
-    useJUnitPlatform()
+application {
+    mainClass.set("net.dasunterstrich.futari.Main")
 }

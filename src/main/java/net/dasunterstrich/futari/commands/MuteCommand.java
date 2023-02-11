@@ -1,10 +1,11 @@
-package net.dasunterstrich.commands;
+package net.dasunterstrich.futari.commands;
 
-import net.dasunterstrich.commands.internal.BotCommand;
-import net.dasunterstrich.moderation.Punisher;
-import net.dasunterstrich.moderation.ReportedMessage;
-import net.dasunterstrich.utils.DiscordUtils;
-import net.dasunterstrich.utils.EmbedUtils;
+import net.dasunterstrich.futari.commands.internal.BotCommand;
+import net.dasunterstrich.futari.moderation.ReportedMessage;
+import net.dasunterstrich.futari.utils.DiscordUtils;
+import net.dasunterstrich.futari.utils.DurationUtils;
+import net.dasunterstrich.futari.utils.EmbedUtils;
+import net.dasunterstrich.futari.moderation.Punisher;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
@@ -23,11 +24,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public class WarnCommand extends BotCommand {
+public class MuteCommand extends BotCommand {
     private final Punisher punisher;
 
-    public WarnCommand(Punisher punisher) {
-        super("warn", "Warn user", Permission.BAN_MEMBERS);
+    public MuteCommand(Punisher punisher) {
+        super("mute", "Mute user", Permission.BAN_MEMBERS);
 
         this.punisher = punisher;
     }
@@ -35,9 +36,10 @@ public class WarnCommand extends BotCommand {
     @Nullable
     @Override
     public CommandData getCommandData() {
-        return Commands.slash("warn", "Warn a user")
-                .addOption(OptionType.USER, "user", "The user to warn", true)
-                .addOption(OptionType.STRING, "reason", "Reason for the warn", true)
+        return Commands.slash("mute", "Mute a user")
+                .addOption(OptionType.USER, "user", "The user to mute", true)
+                .addOption(OptionType.STRING, "reason", "Reason for the mute", true)
+                .addOption(OptionType.STRING, "duration", "Duration of the mute", false)
                 .addOption(OptionType.STRING, "comments", "Further comments for other moderators", false)
                 .addOption(OptionType.ATTACHMENT, "evidence", "Screenshot of additional evidence", false);
     }
@@ -45,7 +47,7 @@ public class WarnCommand extends BotCommand {
     @Nullable
     @Override
     public CommandData getModalCommandData() {
-        return Commands.context(Command.Type.MESSAGE, "warn_modal")
+        return Commands.context(Command.Type.MESSAGE, "mute_modal")
                 .setName(getInteractionMenuName())
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS));
     }
@@ -56,8 +58,9 @@ public class WarnCommand extends BotCommand {
         var message = event.getTarget();
         var author = message.getAuthor();
 
-        return Modal.create("warn:" + author.getId() + ":" + message.getId(), "Warn " + author.getAsTag())
+        return Modal.create("mute:" + author.getId() + ":" + message.getId(), "Mute " + author.getAsTag())
                 .addActionRows(ActionRow.of(TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH).setPlaceholder("Reason").setRequired(true).build()))
+                .addActionRows(ActionRow.of(TextInput.create("duration", "Duration (e.g. 3d)", TextInputStyle.SHORT).setPlaceholder("Duration").setRequired(false).build()))
                 .addActionRows(ActionRow.of(TextInput.create("comments", "Further comments", TextInputStyle.PARAGRAPH).setPlaceholder("Comments").setRequired(false).build()))
                 .build();
     }
@@ -66,7 +69,7 @@ public class WarnCommand extends BotCommand {
     public void onTextCommand(MessageReceivedEvent event) {
         var words = event.getMessage().getContentRaw().split(" ");
         if (words.length < 3) {
-            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!warn <User> <Reason>`")).queue();
+            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!mute <User> [Duration] <Reason>`")).queue();
             return;
         }
 
@@ -77,12 +80,21 @@ public class WarnCommand extends BotCommand {
         }
 
         var targetMember = targetMemberOptional.get();
-        var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
+        String reason;
+
+        var duration = words[2];
+        if (DurationUtils.isValidDurationString(duration)) {
+            reason = String.join(" ", Arrays.copyOfRange(words, 3, words.length));
+        } else {
+            reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
+            duration = "";
+        }
 
         // TODO: Error handling
-        var warnable = punisher.warn(event.getGuild(), targetMember, event.getMember(), reason, "", ReportedMessage.none());
+        var muteable = punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, "", ReportedMessage.none());
+        if (!muteable) return;
 
-        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " warned", "**Reason**: " + reason)).queue();
+        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was muted", "**Reason**: " + reason)).queue();
     }
 
     @Override
@@ -92,13 +104,15 @@ public class WarnCommand extends BotCommand {
 
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");
+        var durationOption = event.getOption("duration");
         var comments = commentsOption == null ? "" : commentsOption.getAsString();
         var evidence = evidenceOption == null ? ReportedMessage.none() : ReportedMessage.ofEvidence(evidenceOption.getAsAttachment());
+        var duration = durationOption == null ? "" : durationOption.getAsString();
 
         // TODO: Error handling
-        punisher.warn(event.getGuild(), targetMember, event.getMember(), reason, comments, evidence);
+        punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidence);
 
-        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " warned", "**Reason**: " + reason)).queue();
+        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " muted", "**Reason**: " + reason)).queue();
     }
 
     @Override
@@ -108,18 +122,20 @@ public class WarnCommand extends BotCommand {
                 var channel = event.getChannel();
                 channel.retrieveMessageById(event.getModalId().split(":")[2]).queue(message -> {
                     var reason = event.getInteraction().getValue("reason").getAsString();
+                    var duration = event.getInteraction().getValue("duration").getAsString();
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
-                    var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
-                    if (!warnable) return;
+                    // TODO: Error handling
+                    var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+                    if (!muteable) return;
 
-                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).setEphemeral(true).queue();
+                    event.replyEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).setEphemeral(true).queue();
                 });
             });
 
         } finally {
             if (!event.isAcknowledged()) {
-                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** warned!")).setEphemeral(true).queue();
+                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** muted!")).setEphemeral(true).queue();
             }
         }
     }

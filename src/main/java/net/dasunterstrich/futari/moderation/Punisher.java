@@ -1,7 +1,7 @@
-package net.dasunterstrich.moderation;
+package net.dasunterstrich.futari.moderation;
 
-import net.dasunterstrich.utils.DurationUtils;
-import net.dasunterstrich.utils.EmbedUtils;
+import net.dasunterstrich.futari.utils.DurationUtils;
+import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
