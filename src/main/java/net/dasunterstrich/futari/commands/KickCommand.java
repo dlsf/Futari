@@ -2,7 +2,7 @@ package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.reports.ReportedMessage;
+import net.dasunterstrich.futari.reports.EvidenceMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
@@ -79,7 +79,7 @@ public class KickCommand extends BotCommand {
         var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
 
         // TODO: Error handling
-        var kickable = punisher.kick(event.getGuild(), targetMember, event.getMember(), reason, "", ReportedMessage.none());
+        var kickable = punisher.kick(event.getGuild(), targetMember, event.getMember(), reason, "", EvidenceMessage.none());
 
         event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " kicked", "**Reason**: " + reason)).queue();
     }
@@ -92,7 +92,7 @@ public class KickCommand extends BotCommand {
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");
         var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? ReportedMessage.none() : ReportedMessage.ofEvidence(evidenceOption.getAsAttachment());
+        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
 
         // TODO: Error handling
         punisher.kick(event.getGuild(), targetMember, event.getMember(), reason, comments, evidence);
@@ -111,7 +111,7 @@ public class KickCommand extends BotCommand {
                     var reason = event.getInteraction().getValue("reason").getAsString();
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
-                    var kickable = punisher.kick(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+                    var kickable = punisher.kick(event.getGuild(), targetUser, event.getMember(), reason, comments, new EvidenceMessage(message.getContentRaw(), message.getAttachments()));
                     if (!kickable.success()) return;
 
                     event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was kicked. Reason: " + reason)).queue();

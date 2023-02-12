@@ -11,7 +11,7 @@ public class Report {
     private final String reason;
     private final String comments;
     private String duration;
-    private ReportedMessage reportedMessage;
+    private EvidenceMessage evidenceMessage;
 
     public Report(PunishmentType punishmentType, User user, User moderator, String reason, String comments) {
         this.punishmentType = punishmentType;
@@ -25,8 +25,8 @@ public class Report {
         this.duration = durationString;
     }
 
-    public void setReportedMessage(ReportedMessage reportedMessage) {
-        this.reportedMessage = reportedMessage;
+    public void setReportedMessage(EvidenceMessage evidenceMessage) {
+        this.evidenceMessage = evidenceMessage;
     }
 
     public PunishmentType getReportType() {
@@ -53,7 +53,7 @@ public class Report {
         return duration;
     }
 
-    public ReportedMessage getReportedMessage() {
-        return reportedMessage;
+    public EvidenceMessage getReportedMessage() {
+        return evidenceMessage;
     }
 }

@@ -1,7 +1,7 @@
 package net.dasunterstrich.futari.moderation;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
-import net.dasunterstrich.futari.reports.ReportedMessage;
+import net.dasunterstrich.futari.reports.EvidenceMessage;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import org.slf4j.Logger;
@@ -27,6 +27,7 @@ public class TimedPunishmentHandler {
         this.jda = jda;
         this.guild = guild;
 
+        // TODO: Make this value higher
         executorService.scheduleAtFixedRate(this::checkForExpiredPunishments, 0, 5, TimeUnit.SECONDS);
     }
 
@@ -63,12 +64,12 @@ public class TimedPunishmentHandler {
         switch (punishmentType) {
             case BAN -> {
                 jda.retrieveUserById(userID).queue(user -> {
-                    punisher.unban(guild, user, guild.getSelfMember(), "Auto", "", ReportedMessage.none());
+                    punisher.unban(guild, user, guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
                 });
             }
             case MUTE -> {
                 guild.retrieveMemberById(userID).queue(member -> {
-                    punisher.unmute(guild, member, guild.getSelfMember(), "Auto", "", ReportedMessage.none());
+                    punisher.unmute(guild, member, guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
                 });
             }
             default -> {

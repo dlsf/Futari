@@ -2,7 +2,7 @@ package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.reports.ReportedMessage;
+import net.dasunterstrich.futari.reports.EvidenceMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
@@ -79,7 +79,7 @@ public class WarnCommand extends BotCommand {
         var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
 
         // TODO: Error handling
-        var warnable = punisher.warn(event.getGuild(), targetMember, event.getMember(), reason, "", ReportedMessage.none());
+        var warnable = punisher.warn(event.getGuild(), targetMember, event.getMember(), reason, "", EvidenceMessage.none());
 
         event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " warned", "**Reason**: " + reason)).queue();
     }
@@ -92,7 +92,7 @@ public class WarnCommand extends BotCommand {
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");
         var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? ReportedMessage.none() : ReportedMessage.ofEvidence(evidenceOption.getAsAttachment());
+        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
 
         // TODO: Error handling
         punisher.warn(event.getGuild(), targetMember, event.getMember(), reason, comments, evidence);
@@ -111,7 +111,7 @@ public class WarnCommand extends BotCommand {
                     var reason = event.getInteraction().getValue("reason").getAsString();
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
-                    var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+                    var warnable = punisher.warn(event.getGuild(), targetUser, event.getMember(), reason, comments, new EvidenceMessage(message.getContentRaw(), message.getAttachments()));
                     if (!warnable.success()) return;
 
                     event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was warned. Reason: " + reason)).queue();

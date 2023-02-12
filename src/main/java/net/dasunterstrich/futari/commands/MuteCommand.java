@@ -2,7 +2,7 @@ package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.reports.ReportedMessage;
+import net.dasunterstrich.futari.reports.EvidenceMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
@@ -90,7 +90,7 @@ public class MuteCommand extends BotCommand {
         }
 
         // TODO: Error handling
-        var muteable = punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, "", ReportedMessage.none());
+        var muteable = punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, "", EvidenceMessage.none());
         if (!muteable.success()) return;
 
         event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was muted", "**Reason**: " + reason)).queue();
@@ -105,7 +105,7 @@ public class MuteCommand extends BotCommand {
         var evidenceOption = event.getOption("evidence");
         var durationOption = event.getOption("duration");
         var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? ReportedMessage.none() : ReportedMessage.ofEvidence(evidenceOption.getAsAttachment());
+        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
         var duration = durationOption == null ? "" : durationOption.getAsString();
 
         // TODO: Error handling
@@ -127,7 +127,7 @@ public class MuteCommand extends BotCommand {
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
                     // TODO: Error handling
-                    var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new ReportedMessage(message.getContentRaw(), message.getAttachments()));
+                    var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new EvidenceMessage(message.getContentRaw(), message.getAttachments()));
                     if (!muteable.success()) return;
 
                     event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).queue();

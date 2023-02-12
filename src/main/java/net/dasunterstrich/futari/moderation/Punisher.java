@@ -1,9 +1,10 @@
 package net.dasunterstrich.futari.moderation;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
+import net.dasunterstrich.futari.moderation.modules.*;
+import net.dasunterstrich.futari.reports.EvidenceMessage;
 import net.dasunterstrich.futari.reports.Report;
 import net.dasunterstrich.futari.reports.ReportManager;
-import net.dasunterstrich.futari.reports.ReportedMessage;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
@@ -17,137 +18,47 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class Punisher {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final DatabaseHandler databaseHandler;
-    private final ReportManager reportManager;
+    public final ReportManager reportManager;
+
+    private final PunishmentModule banModule;
+    private final PunishmentModule muteModule;
+    private final PunishmentModule warnModule;
+    private final PunishmentModule kickModule;
 
     public Punisher(DatabaseHandler databaseHandler, ReportManager reportManager) {
         this.databaseHandler = databaseHandler;
         this.reportManager = reportManager;
+
+        this.banModule = new BanModule(this);
+        this.muteModule = new MuteModule(this);
+        this.warnModule = new WarnModule(this);
+        this.kickModule = new KickModule(this);
     }
 
-    public PunishmentResponse ban(Guild guild, Member member, Member moderator, String reason, String duration, String comments, ReportedMessage reportedMessage) {
-        if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
-
-        // DM user
-        contactUserAndThen(
-                member.getUser(),
-                EmbedUtils.custom(
-                        "Banned from " + guild.getName(),
-                        "**Duration**: " + DurationUtils.toReadableDuration(duration) + "\n**Reason**: " + reason,
-                        Color.RED),
-                throwable -> {}
-        );
-
-        // Ban user
-        try {
-            guild.ban(member, 3, TimeUnit.HOURS).reason(reason + "(" + duration + ")").queue();
-        } catch (Exception exception) {
-            exception.printStackTrace();
-            return PunishmentResponse.failed();
-        }
-
-        // Thread update
-        var report = new Report(PunishmentType.BAN, member.getUser(), moderator.getUser(), reason, comments);
-        report.setDuration(duration);
-        report.setReportedMessage(reportedMessage);
-        reportManager.createReport(member.getUser(), report);
-
-        // Database Update
-        var success = addReportToDatabase(report);
-        return new PunishmentResponse(success, true);
+    public PunishmentResponse ban(Guild guild, Member member, Member moderator, String reason, String duration, String comments, EvidenceMessage evidenceMessage) {
+        return banModule.apply(guild, member, moderator, reason, duration, comments, evidenceMessage);
     }
 
-    public PunishmentResponse unban(Guild guild, User user, Member moderator, String reason, String comment, ReportedMessage reportedMessage) {
-        if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
-
-        guild.unban(user).reason(reason).queue();
-
-        var report = new Report(PunishmentType.UNBAN, user, moderator.getUser(), reason, comment);
-        report.setReportedMessage(reportedMessage);
-        reportManager.createReport(user, report);
-
-        var success = addReportToDatabase(report);
-        return new PunishmentResponse(success, false);
+    public PunishmentResponse unban(Guild guild, User user, Member moderator, String reason, String comment, EvidenceMessage evidenceMessage) {
+        return banModule.revoke(guild, user, moderator, reason, comment, evidenceMessage);
     }
 
-    public PunishmentResponse mute(Guild guild, Member member, Member moderator, String reason, String duration, String comments, ReportedMessage reportedMessage) {
-        if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
-
-        // DM user
-        contactUserAndThen(
-                member.getUser(),
-                EmbedUtils.custom(
-                        "Muted from " + guild.getName(),
-                        "**Duration**: " + DurationUtils.toReadableDuration(duration) + "\n**Reason**: " + reason,
-                        Color.GRAY),
-                throwable -> {}
-        );
-
-        guild.addRoleToMember(member, guild.getRoleById(1073208950280953906L)).reason(reason).queue();
-
-        // Thread update
-        var report = new Report(PunishmentType.MUTE, member.getUser(), moderator.getUser(), reason, comments);
-        report.setDuration(duration);
-        report.setReportedMessage(reportedMessage);
-        reportManager.createReport(member.getUser(), report);
-
-        // Database Update
-        var success = addReportToDatabase(report);
-        return new PunishmentResponse(success, true);
+    public PunishmentResponse mute(Guild guild, Member member, Member moderator, String reason, String duration, String comments, EvidenceMessage evidenceMessage) {
+        return muteModule.apply(guild, member, moderator, reason, duration, comments, evidenceMessage);
     }
 
-    public PunishmentResponse unmute(Guild guild, Member member, Member moderator, String reason, String comment, ReportedMessage reportedMessage) {
-        if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
-
-        // TODO: Null / guild check?
-        guild.removeRoleFromMember(member, guild.getRoleById(1073208950280953906L)).reason(reason).queue();
-
-        // DM user
-        contactUserAndThen(
-                member.getUser(),
-                EmbedUtils.custom(
-                        "You got unmuted from " + guild.getName(),
-                        "**Reason**: " + reason,
-                        Color.GREEN),
-                throwable -> {}
-        );
-
-        var report = new Report(PunishmentType.UNMUTE, member.getUser(), moderator.getUser(), reason, comment);
-        report.setReportedMessage(reportedMessage);
-        reportManager.createReport(member.getUser(), report);
-
-        // Database update
-        var success = addReportToDatabase(report);
-        return new PunishmentResponse(success, true);
+    public PunishmentResponse unmute(Guild guild, Member member, Member moderator, String reason, String comment, EvidenceMessage evidenceMessage) {
+        return muteModule.revoke(guild, member.getUser(), moderator, reason, comment, evidenceMessage);
     }
 
-    public PunishmentResponse warn(Guild guild, Member member, Member moderator, String reason, String comments, ReportedMessage reportedMessage) {
-        if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
-
-        // DM user
-        contactUserAndThen(
-                member.getUser(),
-                EmbedUtils.custom(
-                        "Warned from " + guild.getName(),
-                        "**Reason**: " + reason,
-                        Color.YELLOW),
-                throwable -> {}
-        );
-
-        // Thread update
-        var report = new Report(PunishmentType.WARN, member.getUser(), moderator.getUser(), reason, comments);
-        report.setReportedMessage(reportedMessage);
-        reportManager.createReport(member.getUser(), report);
-
-        // Database Update
-        var success = addReportToDatabase(report);
-        return new PunishmentResponse(success, true);
+    public PunishmentResponse warn(Guild guild, Member member, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
+        return warnModule.apply(guild, member, moderator, reason, comments, evidenceMessage);
     }
 
     public PunishmentResponse unwarn(Guild guild, int punishmentID, Member member, Member moderator, String reason) {
@@ -160,7 +71,7 @@ public class Punisher {
                         "Your warn from " + guild.getName() + " got revoked",
                         "**Reason**: " + reason,
                         Color.GREEN),
-                throwable -> {}
+                result -> {}
         );
 
         // Remove from database
@@ -174,35 +85,11 @@ public class Punisher {
         return new PunishmentResponse(true, true);
     }
 
-    public PunishmentResponse kick(Guild guild, Member member, Member moderator, String reason, String comments, ReportedMessage reportedMessage) {
-        if (!moderator.hasPermission(Permission.KICK_MEMBERS)) return PunishmentResponse.failed();
-
-        // DM user
-        contactUserAndThen(
-                member.getUser(),
-                EmbedUtils.custom(
-                        "Kicked from " + guild.getName(),
-                        "**Reason**: " + reason,
-                        Color.YELLOW),
-                throwable -> {
-                    member.kick().reason(reason).queue();
-
-                    // Thread update
-                    var report = new Report(PunishmentType.KICK, member.getUser(), moderator.getUser(), reason, comments);
-                    report.setReportedMessage(reportedMessage);
-                    reportManager.createReport(member.getUser(), report);
-
-                    // Database Update
-                    var success = addReportToDatabase(report);
-                    System.out.println(throwable.isFailure());
-                }
-        );
-
-        // TODO: Edit
-        return new PunishmentResponse(true, true);
+    public PunishmentResponse kick(Guild guild, Member member, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
+        return kickModule.apply(guild, member, moderator, reason, comments, evidenceMessage);
     }
 
-    private void contactUserAndThen(User user, MessageEmbed embed, Consumer<? super Result<Message>> action) {
+    public void contactUserAndThen(User user, MessageEmbed embed, Consumer<? super Result<Message>> action) {
         user.openPrivateChannel()
                 .flatMap(privateChannel -> privateChannel.sendMessageEmbeds(embed))
                 .mapToResult()
@@ -210,7 +97,7 @@ public class Punisher {
 
     }
 
-    private boolean addReportToDatabase(Report report) {
+    public boolean addPunishmentToDatabase(Report report) {
         try(var connection = databaseHandler.getConnection()) {
             var statement = connection.prepareStatement("INSERT INTO Punishments (user_id, moderator_id, type, reason, comment, duration) VALUES (?, ?, ?, ?, ?, ?)");
             statement.setLong(1, report.getUser().getIdLong());
@@ -239,7 +126,7 @@ public class Punisher {
         return true;
     }
 
-    private boolean addTemporaryPunishment(Connection connection, Report report, int punishmentID) throws SQLException {
+    public boolean addTemporaryPunishment(Connection connection, Report report, int punishmentID) throws SQLException {
         var statement = connection.prepareStatement("INSERT INTO TemporaryPunishments (report_id, timestamp) VALUES (?, ?)");
         statement.setInt(1, punishmentID);
         statement.setLong(2, System.currentTimeMillis() + DurationUtils.durationStringToMillis(report.getDuration()));

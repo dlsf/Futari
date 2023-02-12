@@ -2,7 +2,7 @@ package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.reports.ReportedMessage;
+import net.dasunterstrich.futari.reports.EvidenceMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
@@ -11,7 +11,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -50,7 +49,7 @@ public class UnmuteCommand extends BotCommand {
         var targetMember = targetMemberOptional.get();
         var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
 
-        punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, "", ReportedMessage.none());
+        punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, "", EvidenceMessage.none());
 
         event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " unmuted", "**Reason**: " + reason)).queue();
     }
@@ -63,7 +62,7 @@ public class UnmuteCommand extends BotCommand {
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");
         var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? ReportedMessage.none() : ReportedMessage.ofEvidence(evidenceOption.getAsAttachment());
+        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
 
         punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, comments, evidence);
 
