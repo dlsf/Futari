@@ -1,8 +1,6 @@
 package net.dasunterstrich.futari;
 
-import net.dasunterstrich.futari.commands.BanCommand;
-import net.dasunterstrich.futari.commands.MuteCommand;
-import net.dasunterstrich.futari.commands.WarnCommand;
+import net.dasunterstrich.futari.commands.*;
 import net.dasunterstrich.futari.commands.internal.CommandManager;
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.listener.ChannelCreateListener;
@@ -60,10 +58,13 @@ public class Bot {
         // TODO: Alt linking
         // TODO: Right-click user interactions
         // TODO: Message attachments
+        // TODO: Update thread names
 
         commandManager.addCommand(new BanCommand(punisher));
         commandManager.addCommand(new MuteCommand(punisher));
         commandManager.addCommand(new WarnCommand(punisher));
+        commandManager.addCommand(new UnbanCommand(punisher));
+        commandManager.addCommand(new UnmuteCommand(punisher));
 
         jda.updateCommands().addCommands(commandManager.registeredCommands()).queue();
         logger.info("Commands initialized");

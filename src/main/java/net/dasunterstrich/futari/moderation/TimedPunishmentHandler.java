@@ -1,7 +1,7 @@
 package net.dasunterstrich.futari.moderation;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
-import net.dasunterstrich.futari.reports.ReportType;
+import net.dasunterstrich.futari.reports.ReportedMessage;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class TimedPunishmentHandler {
             while (resultSet.next()) {
                 var user = resultSet.getLong("user_id");
                 var type = resultSet.getString("type");
-                revokePunishments(user, ReportType.valueOf(type));
+                revokePunishments(user, PunishmentType.valueOf(type));
 
                 revokedPunishments.add(resultSet.getInt("report_id"));
             }
@@ -59,20 +59,20 @@ public class TimedPunishmentHandler {
         }
     }
 
-    private void revokePunishments(long userID, ReportType reportType) throws SQLException {
-        switch (reportType) {
+    private void revokePunishments(long userID, PunishmentType punishmentType) throws SQLException {
+        switch (punishmentType) {
             case BAN -> {
                 jda.retrieveUserById(userID).queue(user -> {
-                    punisher.unban(guild, user, guild.getSelfMember(), "Auto");
+                    punisher.unban(guild, user, guild.getSelfMember(), "Auto", "", ReportedMessage.none());
                 });
             }
             case MUTE -> {
                 guild.retrieveMemberById(userID).queue(member -> {
-                    punisher.unmute(guild, member, guild.getSelfMember(), "Auto");
+                    punisher.unmute(guild, member, guild.getSelfMember(), "Auto", "", ReportedMessage.none());
                 });
             }
             default -> {
-                logger.warn("Encountered unexpected argument while automatically revoking punishment: " + reportType.name());
+                logger.warn("Encountered unexpected argument while automatically revoking punishment: " + punishmentType.name());
             }
         }
     }

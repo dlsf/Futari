@@ -11,11 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class BotCommand {
     public abstract @Nullable CommandData getCommandData();
-    public abstract @Nullable CommandData getModalCommandData();
-    public abstract @Nullable Modal buildModal(MessageContextInteractionEvent event);
     public abstract void onTextCommand(MessageReceivedEvent event);
     public abstract void onSlashCommand(SlashCommandInteractionEvent event);
-    public abstract void onModalInteraction(ModalInteractionEvent event);
 
     private final String name;
     private final @Nullable String interactionMenuName;
@@ -25,6 +22,24 @@ public abstract class BotCommand {
         this.name = name;
         this.interactionMenuName = interactionMenuName;
         this.permission = permission;
+    }
+
+    public BotCommand(String name, @Nullable Permission permission) {
+        this.name = name;
+        this.interactionMenuName = null;
+        this.permission = permission;
+    }
+
+    public @Nullable CommandData getModalCommandData() {
+        return null;
+    }
+
+    public @Nullable Modal buildModal(MessageContextInteractionEvent event) {
+        return null;
+    }
+
+    public void onModalInteraction(ModalInteractionEvent event) {
+        // Do nothing
     }
 
     public String getName() {

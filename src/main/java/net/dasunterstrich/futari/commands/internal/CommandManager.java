@@ -35,7 +35,7 @@ public class CommandManager extends ListenerAdapter {
         var executedCommand = commands.stream().filter(command -> event.getFullCommandName().equalsIgnoreCase(command.getName())).findAny();
         if (executedCommand.isEmpty()) return;
 
-        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
+        if (executedCommand.get().getPermission() != null && !event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         executedCommand.get().onSlashCommand(event);
     }
@@ -47,7 +47,7 @@ public class CommandManager extends ListenerAdapter {
         var executedCommand = commands.stream().filter(command -> ("!" + command.getName()).equalsIgnoreCase(event.getMessage().getContentRaw().split(" ")[0])).findAny();
         if (executedCommand.isEmpty()) return;
 
-        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
+        if (executedCommand.get().getPermission() != null && !event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         executedCommand.get().onTextCommand(event);
     }
@@ -59,7 +59,7 @@ public class CommandManager extends ListenerAdapter {
         var executedCommand = commands.stream().filter(command -> event.getName().equals(command.getInteractionMenuName())).findAny();
         if (executedCommand.isEmpty()) return;
 
-        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
+        if (executedCommand.get().getPermission() != null && !event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         event.replyModal(executedCommand.get().buildModal(event)).queue();
     }
@@ -71,7 +71,7 @@ public class CommandManager extends ListenerAdapter {
         var executedCommand = commands.stream().filter(command -> event.getModalId().startsWith(command.getName() + ":")).findAny();
         if (executedCommand.isEmpty()) return;
 
-        if (!event.getMember().hasPermission(executedCommand.get().getPermission())) return;
+        if (executedCommand.get().getPermission() != null && !event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
         executedCommand.get().onModalInteraction(event);
     }

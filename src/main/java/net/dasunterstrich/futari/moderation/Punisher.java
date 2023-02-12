@@ -3,7 +3,6 @@ package net.dasunterstrich.futari.moderation;
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.reports.Report;
 import net.dasunterstrich.futari.reports.ReportManager;
-import net.dasunterstrich.futari.reports.ReportType;
 import net.dasunterstrich.futari.reports.ReportedMessage;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
@@ -56,7 +55,7 @@ public class Punisher {
         }
 
         // Thread update
-        var report = new Report(ReportType.BAN, member.getUser(), moderator.getUser(), reason, comments);
+        var report = new Report(PunishmentType.BAN, member.getUser(), moderator.getUser(), reason, comments);
         report.setDuration(duration);
         report.setReportedMessage(reportedMessage);
         reportManager.createReport(member.getUser(), report);
@@ -66,12 +65,13 @@ public class Punisher {
         return new PunishmentResponse(success, true);
     }
 
-    public PunishmentResponse unban(Guild guild, User user, Member moderator, String reason) {
+    public PunishmentResponse unban(Guild guild, User user, Member moderator, String reason, String comment, ReportedMessage reportedMessage) {
         if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
 
         guild.unban(user).reason(reason).queue();
 
-        var report = new Report(ReportType.UNBAN, user, moderator.getUser(), reason, "");
+        var report = new Report(PunishmentType.UNBAN, user, moderator.getUser(), reason, comment);
+        report.setReportedMessage(reportedMessage);
         reportManager.createReport(user, report);
 
         var success = addReportToDatabase(report);
@@ -94,7 +94,7 @@ public class Punisher {
         guild.addRoleToMember(member, guild.getRoleById(1073208950280953906L)).reason(reason).queue();
 
         // Thread update
-        var report = new Report(ReportType.MUTE, member.getUser(), moderator.getUser(), reason, comments);
+        var report = new Report(PunishmentType.MUTE, member.getUser(), moderator.getUser(), reason, comments);
         report.setDuration(duration);
         report.setReportedMessage(reportedMessage);
         reportManager.createReport(member.getUser(), report);
@@ -104,7 +104,7 @@ public class Punisher {
         return new PunishmentResponse(success, true);
     }
 
-    public PunishmentResponse unmute(Guild guild, Member member, Member moderator, String reason) {
+    public PunishmentResponse unmute(Guild guild, Member member, Member moderator, String reason, String comment, ReportedMessage reportedMessage) {
         if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
 
         // TODO: Null / guild check?
@@ -120,7 +120,8 @@ public class Punisher {
                 throwable -> {}
         );
 
-        var report = new Report(ReportType.UNMUTE, member.getUser(), moderator.getUser(), reason, "");
+        var report = new Report(PunishmentType.UNMUTE, member.getUser(), moderator.getUser(), reason, comment);
+        report.setReportedMessage(reportedMessage);
         reportManager.createReport(member.getUser(), report);
 
         // Database update
@@ -142,7 +143,7 @@ public class Punisher {
         );
 
         // Thread update
-        var report = new Report(ReportType.WARN, member.getUser(), moderator.getUser(), reason, comments);
+        var report = new Report(PunishmentType.WARN, member.getUser(), moderator.getUser(), reason, comments);
         report.setReportedMessage(reportedMessage);
         reportManager.createReport(member.getUser(), report);
 

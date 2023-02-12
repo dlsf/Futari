@@ -1,10 +1,11 @@
 package net.dasunterstrich.futari.reports;
 
+import net.dasunterstrich.futari.moderation.PunishmentType;
 import net.dv8tion.jda.api.entities.User;
 
 public class Report {
 
-    private final ReportType reportType;
+    private final PunishmentType punishmentType;
     private final User user;
     private final User moderator;
     private final String reason;
@@ -12,8 +13,8 @@ public class Report {
     private String duration;
     private ReportedMessage reportedMessage;
 
-    public Report(ReportType reportType, User user, User moderator, String reason, String comments) {
-        this.reportType = reportType;
+    public Report(PunishmentType punishmentType, User user, User moderator, String reason, String comments) {
+        this.punishmentType = punishmentType;
         this.user = user;
         this.moderator = moderator;
         this.reason = reason;
@@ -28,8 +29,8 @@ public class Report {
         this.reportedMessage = reportedMessage;
     }
 
-    public ReportType getReportType() {
-        return reportType;
+    public PunishmentType getReportType() {
+        return punishmentType;
     }
 
     public User getUser() {
