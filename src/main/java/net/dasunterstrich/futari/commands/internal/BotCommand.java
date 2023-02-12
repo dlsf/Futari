@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class BotCommand {
-    public abstract @Nullable CommandData getCommandData();
+    public abstract CommandData getCommandData();
     public abstract void onTextCommand(MessageReceivedEvent event);
     public abstract void onSlashCommand(SlashCommandInteractionEvent event);
 

@@ -32,7 +32,6 @@ public class WarnCommand extends BotCommand {
         this.punisher = punisher;
     }
 
-    @Nullable
     @Override
     public CommandData getCommandData() {
         return Commands.slash("warn", "Warn a user")

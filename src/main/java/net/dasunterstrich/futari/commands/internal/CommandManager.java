@@ -5,6 +5,7 @@ import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionE
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 
 import java.util.*;
@@ -20,7 +21,8 @@ public class CommandManager extends ListenerAdapter {
         var set = new LinkedHashSet<CommandData>();
 
         for (var command : commands) {
-            set.add(command.getCommandData());
+            var commandData = command.getCommandData().setDefaultPermissions(DefaultMemberPermissions.enabledFor(command.getPermission()));
+            set.add(commandData);
             set.add(command.getModalCommandData());
         }
 

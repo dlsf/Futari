@@ -63,6 +63,7 @@ public class Bot {
         commandManager.addCommand(new BanCommand(punisher));
         commandManager.addCommand(new MuteCommand(punisher));
         commandManager.addCommand(new WarnCommand(punisher));
+        commandManager.addCommand(new KickCommand(punisher));
         commandManager.addCommand(new UnbanCommand(punisher));
         commandManager.addCommand(new UnmuteCommand(punisher));
 

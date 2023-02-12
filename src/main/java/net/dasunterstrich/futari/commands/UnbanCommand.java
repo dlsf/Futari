@@ -24,7 +24,6 @@ public class UnbanCommand extends BotCommand {
         this.punisher = punisher;
     }
 
-    @Nullable
     @Override
     public CommandData getCommandData() {
         return Commands.slash("unban", "Unban a user")

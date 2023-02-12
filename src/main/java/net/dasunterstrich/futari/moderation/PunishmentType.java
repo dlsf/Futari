@@ -7,6 +7,7 @@ public enum PunishmentType {
     BAN("Ban", Color.RED, true),
     MUTE("Mute", Color.GRAY, true),
     WARN("Warn", Color.YELLOW, true),
+    KICK("Kick", Color.YELLOW, true),
     UNBAN("Unban", Color.GREEN, false),
     UNMUTE("Unmute", Color.GREEN, false);
 

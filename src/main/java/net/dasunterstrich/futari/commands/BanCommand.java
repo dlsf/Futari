@@ -33,7 +33,6 @@ public class BanCommand extends BotCommand {
         this.punisher = punisher;
     }
 
-    @Nullable
     @Override
     public CommandData getCommandData() {
         return Commands.slash("ban", "Ban a user")

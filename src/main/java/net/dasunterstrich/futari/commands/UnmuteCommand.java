@@ -24,7 +24,6 @@ public class UnmuteCommand extends BotCommand {
         this.punisher = punisher;
     }
 
-    @Nullable
     @Override
     public CommandData getCommandData() {
         return Commands.slash("unmute", "Unmute a user")

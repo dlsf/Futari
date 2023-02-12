@@ -7,10 +7,8 @@ import net.dasunterstrich.futari.reports.ReportedMessage;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.utils.Result;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,7 +35,7 @@ public class Punisher {
         if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
 
         // DM user
-        contactUser(
+        contactUserAndThen(
                 member.getUser(),
                 EmbedUtils.custom(
                         "Banned from " + guild.getName(),
@@ -82,7 +80,7 @@ public class Punisher {
         if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
 
         // DM user
-        contactUser(
+        contactUserAndThen(
                 member.getUser(),
                 EmbedUtils.custom(
                         "Muted from " + guild.getName(),
@@ -111,7 +109,7 @@ public class Punisher {
         guild.removeRoleFromMember(member, guild.getRoleById(1073208950280953906L)).reason(reason).queue();
 
         // DM user
-        contactUser(
+        contactUserAndThen(
                 member.getUser(),
                 EmbedUtils.custom(
                         "You got unmuted from " + guild.getName(),
@@ -133,7 +131,7 @@ public class Punisher {
         if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
 
         // DM user
-        contactUser(
+        contactUserAndThen(
                 member.getUser(),
                 EmbedUtils.custom(
                         "Warned from " + guild.getName(),
@@ -156,7 +154,7 @@ public class Punisher {
         if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
 
         // DM user
-        contactUser(
+        contactUserAndThen(
                 member.getUser(),
                 EmbedUtils.custom(
                         "Your warn from " + guild.getName() + " got revoked",
@@ -176,10 +174,39 @@ public class Punisher {
         return new PunishmentResponse(true, true);
     }
 
-    private void contactUser(User user, MessageEmbed embed, Consumer<Throwable> onFailure) {
+    public PunishmentResponse kick(Guild guild, Member member, Member moderator, String reason, String comments, ReportedMessage reportedMessage) {
+        if (!moderator.hasPermission(Permission.KICK_MEMBERS)) return PunishmentResponse.failed();
+
+        // DM user
+        contactUserAndThen(
+                member.getUser(),
+                EmbedUtils.custom(
+                        "Kicked from " + guild.getName(),
+                        "**Reason**: " + reason,
+                        Color.YELLOW),
+                throwable -> {
+                    member.kick().reason(reason).queue();
+
+                    // Thread update
+                    var report = new Report(PunishmentType.KICK, member.getUser(), moderator.getUser(), reason, comments);
+                    report.setReportedMessage(reportedMessage);
+                    reportManager.createReport(member.getUser(), report);
+
+                    // Database Update
+                    var success = addReportToDatabase(report);
+                    System.out.println(throwable.isFailure());
+                }
+        );
+
+        // TODO: Edit
+        return new PunishmentResponse(true, true);
+    }
+
+    private void contactUserAndThen(User user, MessageEmbed embed, Consumer<? super Result<Message>> action) {
         user.openPrivateChannel()
                 .flatMap(privateChannel -> privateChannel.sendMessageEmbeds(embed))
-                .queue(null, onFailure);
+                .mapToResult()
+                .queue(action);
 
     }
 
