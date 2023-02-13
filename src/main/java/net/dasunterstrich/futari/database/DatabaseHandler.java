@@ -32,7 +32,7 @@ public class DatabaseHandler {
         try (var connection = dataSource.getConnection(); var statement = connection.createStatement()) {
             statement.execute("CREATE TABLE IF NOT EXISTS ReportThreads (user_id INTEGER PRIMARY KEY, thread_id INTEGER)");
             statement.execute("CREATE TABLE IF NOT EXISTS Punishments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, moderator_id INTEGER, type TEXT, reason TEXT, comment TEXT, timestamp INTEGER, duration TEXT)");
-            statement.execute("CREATE TABLE IF NOT EXISTS TemporaryPunishments (report_id INTEGER PRIMARY KEY, timestamp INTEGER, FOREIGN KEY(report_id) REFERENCES Punishments(id))");
+            statement.execute("CREATE TABLE IF NOT EXISTS TemporaryPunishments (report_id INTEGER PRIMARY KEY, timestamp INTEGER, done INTEGER DEFAULT 0, FOREIGN KEY(report_id) REFERENCES Punishments(id))");
         } catch (SQLException exception) {
             logger.error("Could not create tables", exception);
             System.exit(-1);

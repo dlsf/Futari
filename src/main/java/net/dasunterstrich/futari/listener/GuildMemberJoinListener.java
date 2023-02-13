@@ -22,16 +22,29 @@ public class GuildMemberJoinListener extends ListenerAdapter {
         var memberID = event.getMember().getIdLong();
 
         try (var connection = databaseHandler.getConnection(); var statement = connection.createStatement()) {
-            var resultSet = statement.executeQuery("SELECT * FROM Punishments WHERE user_id = " + memberID);
-            if (resultSet.next()) {
-                addMutedRole(event.getGuild(), event.getMember());
-                return;
+            var resultSet = statement.executeQuery("SELECT * FROM Punishments P LEFT JOIN TemporaryPunishments TP ON P.id = TP.report_id WHERE (type = 'MUTE' OR type = 'UNMUTE') AND user_id = " + memberID);
+            var mute = false;
+
+            // Only the last iteration matters, we want to know what mute/unmute happened last to this user
+            while (resultSet.next()) {
+                var type = resultSet.getString("type");
+                switch (type) {
+                    case "UNMUTE" -> mute = false;
+                    case "MUTE" -> {
+                        // Mute if permanent
+                        if (resultSet.getString("duration").isEmpty()) {
+                            mute = true;
+                        } else if (resultSet.getInt("done") == 0) {
+                            mute = true;
+                        } else {
+                            mute = false;
+                        }
+                    }
+                }
             }
 
-            resultSet = statement.executeQuery("SELECT * FROM TemporaryPunishments TP INNER JOIN Punishments P on TP.report_id = P.id WHERE TP.timestamp >= " + System.currentTimeMillis() + " AND P.user_id = " + memberID);
-            if (resultSet.next()) {
+            if (mute) {
                 addMutedRole(event.getGuild(), event.getMember());
-                return;
             }
         } catch (Exception exception) {
             logger.error("Failed to assign mute role to " + memberID, exception);

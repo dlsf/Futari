@@ -99,6 +99,8 @@ public class Punisher {
     }
 
     public boolean addPunishmentToDatabase(Report report) {
+        if (report.getReason().equals("Auto")) return true;
+
         try(var connection = databaseHandler.getConnection()) {
             var statement = connection.prepareStatement("INSERT INTO Punishments (user_id, moderator_id, type, reason, comment, timestamp, duration) VALUES (?, ?, ?, ?, ?, ?, ?)");
             statement.setLong(1, report.getUser().getIdLong());
@@ -114,7 +116,7 @@ public class Punisher {
                 statement.setString(7, report.getDuration());
             }
 
-            statement.execute();
+            statement.executeUpdate();
             statement.close();
 
             if (report.getDuration() != null && !report.getDuration().isEmpty()) {

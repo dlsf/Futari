@@ -16,11 +16,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.utils.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.time.Instant;
 
 public class ModlogCommand extends BotCommand {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -67,7 +64,7 @@ public class ModlogCommand extends BotCommand {
         var stringBuilder = new StringBuilder();
 
         try (var connection = databaseHandler.getConnection(); var statement = connection.createStatement()) {
-            var resultSet = statement.executeQuery("SELECT * FROM Punishments WHERE user_id = " + user.getIdLong());
+            var resultSet = statement.executeQuery("SELECT * FROM Punishments WHERE user_id = " + user.getIdLong() + " ORDER BY id DESC");
             if (!resultSet.next()) {
                 return EmbedUtils.error("User doesn't have a modlog");
             }

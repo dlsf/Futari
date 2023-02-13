@@ -53,12 +53,12 @@ public class Bot {
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans
         // TODO: Ban message deletion argument
-        // TODO: Split Punisher
-        // TODO: Warn if can't punish user
         // TODO: Alt linking
         // TODO: Right-click user interactions
         // TODO: Message attachments
-        // TODO: Update thread names
+        // TODO: Modlog channel
+        // TODO: Unpunish flag instead of delete
+        // TODO: Remove unnecessary unmute/unban arguments
 
         commandManager.addCommand(new HelpCommand(commandManager));
         commandManager.addCommand(new BanCommand(punisher));

@@ -1,7 +1,6 @@
 package net.dasunterstrich.futari.listener;
 
 import net.dasunterstrich.futari.reports.ReportManager;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
@@ -15,8 +14,6 @@ public class UsernameUpdateListener extends ListenerAdapter {
 
     @Override
     public void onUserUpdateName(@NotNull UserUpdateNameEvent event) {
-        System.out.println("Trigger");
-
         var user = event.getUser();
 
         System.out.println(reportManager.hasReportThread(user));
@@ -25,7 +22,6 @@ public class UsernameUpdateListener extends ListenerAdapter {
         }
 
         var reportThreadID = reportManager.getReportThreadID(user);
-        System.out.println(reportThreadID);
         event.getJDA().getGuildById(497092213034188806L)
                 .getThreadChannelById(reportThreadID)
                 .getManager()

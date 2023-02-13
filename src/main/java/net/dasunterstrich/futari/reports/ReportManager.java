@@ -97,7 +97,7 @@ public class ReportManager {
             statement.setLong(1, userId);
             statement.setLong(2, threadId);
 
-            statement.execute();
+            statement.executeUpdate();
             statement.close();
         } catch (Exception exception) {
             logger.error("Error while inserting thread data", exception);

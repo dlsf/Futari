@@ -35,7 +35,7 @@ public class TimedPunishmentHandler {
         logger.debug("Checking for expired punishments");
 
         try (var connection = databaseHandler.getConnection(); var statement = connection.createStatement()) {
-            var resultSet = statement.executeQuery("SELECT report_id, user_id, type FROM TemporaryPunishments INNER JOIN Punishments P on TemporaryPunishments.report_id = P.id WHERE TemporaryPunishments.timestamp <= " + System.currentTimeMillis());
+            var resultSet = statement.executeQuery("SELECT report_id, user_id, type FROM TemporaryPunishments INNER JOIN Punishments P on TemporaryPunishments.report_id = P.id WHERE TemporaryPunishments.done = 0 AND TemporaryPunishments.timestamp <= " + System.currentTimeMillis());
 
             var revokedPunishments = new HashSet<Integer>();
             while (resultSet.next()) {
@@ -48,7 +48,7 @@ public class TimedPunishmentHandler {
 
             revokedPunishments.forEach(reportID -> {
                 try {
-                    statement.execute("DELETE FROM TemporaryPunishments WHERE report_id = " + reportID);
+                    statement.execute("UPDATE TemporaryPunishments SET done = 1 WHERE report_id = " + reportID);
 
                     logger.debug("Revoked punishment with report ID " +  reportID);
                 } catch (SQLException exception) {
