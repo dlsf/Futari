@@ -35,10 +35,10 @@ public class HelpCommand extends BotCommand {
     }
 
     private MessageEmbed buildHelpEmbed(String prefix) {
-        var stringBuilder = new StringBuilder();
+        var stringBuilder = new StringBuilder("**Please use Slash commands or the Apps menu!**\n\n");
         commandManager.getCommands().stream()
                 .map(BotCommand::getSyntax)
-                .forEach(syntax -> stringBuilder.append(prefix).append(syntax).append("\n"));
+                .forEach(syntax -> stringBuilder.append("`").append("!").append(syntax).append("`").append("\n"));
 
         var body = stringBuilder.toString();
         return EmbedUtils.success("Help - Available Commands", body.substring(0, body.length() - 1));
