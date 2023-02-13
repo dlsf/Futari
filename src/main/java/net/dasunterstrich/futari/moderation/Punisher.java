@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -99,17 +100,18 @@ public class Punisher {
 
     public boolean addPunishmentToDatabase(Report report) {
         try(var connection = databaseHandler.getConnection()) {
-            var statement = connection.prepareStatement("INSERT INTO Punishments (user_id, moderator_id, type, reason, comment, duration) VALUES (?, ?, ?, ?, ?, ?)");
+            var statement = connection.prepareStatement("INSERT INTO Punishments (user_id, moderator_id, type, reason, comment, timestamp, duration) VALUES (?, ?, ?, ?, ?, ?, ?)");
             statement.setLong(1, report.getUser().getIdLong());
             statement.setLong(2, report.getModerator().getIdLong());
             statement.setString(3, report.getReportType().name());
             statement.setString(4, report.getReason());
             statement.setString(5, report.getComments());
+            statement.setLong(6, Instant.now().getEpochSecond());
 
             if (report.getDuration() == null) {
-                statement.setString(6, "");
+                statement.setString(7, "");
             } else {
-                statement.setString(6, report.getDuration());
+                statement.setString(7, report.getDuration());
             }
 
             statement.execute();

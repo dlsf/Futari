@@ -25,7 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class Bot {
-    Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public void start() {
         var databaseHandler = initializeDatabase();
@@ -49,7 +49,7 @@ public class Bot {
             }
         });
 
-        // TODO: Add all commands (+ help, reason, duration)
+        // TODO: Add all commands (+ reason, duration)
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans
         // TODO: Ban message deletion argument
@@ -67,6 +67,7 @@ public class Bot {
         commandManager.addCommand(new KickCommand(punisher));
         commandManager.addCommand(new UnbanCommand(punisher));
         commandManager.addCommand(new UnmuteCommand(punisher));
+        commandManager.addCommand(new ModlogCommand(databaseHandler));
 
         jda.updateCommands().addCommands(commandManager.registeredCommandData()).queue();
         logger.info("Commands initialized");
