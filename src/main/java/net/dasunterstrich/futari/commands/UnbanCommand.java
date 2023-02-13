@@ -18,7 +18,7 @@ public class UnbanCommand extends BotCommand {
     private final Punisher punisher;
 
     public UnbanCommand(Punisher punisher) {
-        super("unban", Permission.BAN_MEMBERS);
+        super("unban", Permission.BAN_MEMBERS, "unban <User> [Reason]");
 
         this.punisher = punisher;
     }
@@ -47,7 +47,7 @@ public class UnbanCommand extends BotCommand {
         }
 
         var targetUser = targetUserOptional.get();
-        var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
+        var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length)); // TODO: Unban without reason
 
         punisher.unban(event.getGuild(), targetUser, event.getMember(), reason, "", EvidenceMessage.none());
 
@@ -57,7 +57,7 @@ public class UnbanCommand extends BotCommand {
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
         var targetUser = event.getOption("user").getAsUser();
-        var reason = event.getOption("reason").getAsString();
+        var reason = event.getOption("reason").getAsString(); // TODO: Unban without reason
 
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");

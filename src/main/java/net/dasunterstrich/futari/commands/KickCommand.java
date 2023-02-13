@@ -27,7 +27,7 @@ public class KickCommand extends BotCommand {
     private final Punisher punisher;
 
     public KickCommand(Punisher punisher) {
-        super("kick", "Kick user", Permission.KICK_MEMBERS);
+        super("kick", "Kick user", Permission.KICK_MEMBERS, "kick <User> <Reason>");
 
         this.punisher = punisher;
     }

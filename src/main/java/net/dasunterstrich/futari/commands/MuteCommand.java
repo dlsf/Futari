@@ -28,7 +28,7 @@ public class MuteCommand extends BotCommand {
     private final Punisher punisher;
 
     public MuteCommand(Punisher punisher) {
-        super("mute", "Mute user", Permission.BAN_MEMBERS);
+        super("mute", "Mute user", Permission.BAN_MEMBERS, "mute <User> [Duration] <Reason>");
 
         this.punisher = punisher;
     }

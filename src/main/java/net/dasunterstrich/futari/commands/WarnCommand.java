@@ -27,7 +27,7 @@ public class WarnCommand extends BotCommand {
     private final Punisher punisher;
 
     public WarnCommand(Punisher punisher) {
-        super("warn", "Warn user", Permission.BAN_MEMBERS);
+        super("warn", "Warn user", Permission.BAN_MEMBERS, "warn <User> <Reason>");
 
         this.punisher = punisher;
     }

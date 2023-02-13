@@ -60,6 +60,7 @@ public class Bot {
         // TODO: Message attachments
         // TODO: Update thread names
 
+        commandManager.addCommand(new HelpCommand(commandManager));
         commandManager.addCommand(new BanCommand(punisher));
         commandManager.addCommand(new MuteCommand(punisher));
         commandManager.addCommand(new WarnCommand(punisher));
@@ -67,7 +68,7 @@ public class Bot {
         commandManager.addCommand(new UnbanCommand(punisher));
         commandManager.addCommand(new UnmuteCommand(punisher));
 
-        jda.updateCommands().addCommands(commandManager.registeredCommands()).queue();
+        jda.updateCommands().addCommands(commandManager.registeredCommandData()).queue();
         logger.info("Commands initialized");
     }
 

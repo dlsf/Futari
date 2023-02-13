@@ -11,13 +11,13 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import java.util.*;
 
 public class CommandManager extends ListenerAdapter {
-    private final Set<BotCommand> commands = new HashSet<>();
+    private final Set<BotCommand> commands = new LinkedHashSet<>();
 
     public void addCommand(BotCommand command) {
         commands.add(command);
     }
 
-    public Collection<CommandData> registeredCommands() {
+    public Collection<CommandData> registeredCommandData() {
         var set = new LinkedHashSet<CommandData>();
 
         for (var command : commands) {
@@ -28,6 +28,10 @@ public class CommandManager extends ListenerAdapter {
 
         set.removeIf(Objects::isNull);
         return set;
+    }
+
+    public Set<BotCommand> getCommands() {
+        return new LinkedHashSet<>(commands);
     }
 
     @Override

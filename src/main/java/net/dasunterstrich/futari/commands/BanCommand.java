@@ -28,7 +28,7 @@ public class BanCommand extends BotCommand {
     private final Punisher punisher;
 
     public BanCommand(Punisher punisher) {
-        super("ban", "Ban user", Permission.BAN_MEMBERS);
+        super("ban", "Ban user", Permission.BAN_MEMBERS, "ban <User> [Duration] <Reason>");
 
         this.punisher = punisher;
     }

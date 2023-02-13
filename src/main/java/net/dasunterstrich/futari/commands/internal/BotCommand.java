@@ -17,17 +17,20 @@ public abstract class BotCommand {
     private final String name;
     private final @Nullable String interactionMenuName;
     private final @Nullable Permission permission;
+    private final String syntax;
 
-    public BotCommand(String name, @Nullable String interactionMenuName, @Nullable Permission permission) {
+    public BotCommand(String name, @Nullable String interactionMenuName, @Nullable Permission permission, String syntax) {
         this.name = name;
         this.interactionMenuName = interactionMenuName;
         this.permission = permission;
+        this.syntax = syntax;
     }
 
-    public BotCommand(String name, @Nullable Permission permission) {
+    public BotCommand(String name, @Nullable Permission permission, String syntax) {
         this.name = name;
         this.interactionMenuName = null;
         this.permission = permission;
+        this.syntax = syntax;
     }
 
     public @Nullable CommandData getModalCommandData() {
@@ -54,5 +57,9 @@ public abstract class BotCommand {
     @Nullable
     public Permission getPermission() {
         return permission;
+    }
+
+    public String getSyntax() {
+        return syntax;
     }
 }
