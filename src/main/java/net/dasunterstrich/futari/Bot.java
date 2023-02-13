@@ -5,6 +5,7 @@ import net.dasunterstrich.futari.commands.internal.CommandManager;
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.listener.ChannelCreateListener;
 import net.dasunterstrich.futari.listener.GuildMemberJoinListener;
+import net.dasunterstrich.futari.listener.UsernameUpdateListener;
 import net.dasunterstrich.futari.moderation.Punisher;
 import net.dasunterstrich.futari.moderation.TimedPunishmentHandler;
 import net.dasunterstrich.futari.reports.ReportManager;
@@ -29,16 +30,15 @@ public class Bot {
     public void start() {
         var databaseHandler = initializeDatabase();
         var commandManager = new CommandManager();
+        var reportManager = new ReportManager(databaseHandler);
+        var punisher = new Punisher(databaseHandler, reportManager);
 
         JDA jda = JDABuilder.createDefault(readToken())
                 .setActivity(Activity.playing("with Bocchicord"))
-                .addEventListeners(commandManager, new ChannelCreateListener(), new GuildMemberJoinListener(databaseHandler))
-                .setMemberCachePolicy(MemberCachePolicy.ONLINE)
+                .addEventListeners(commandManager, new ChannelCreateListener(), new GuildMemberJoinListener(databaseHandler), new UsernameUpdateListener(reportManager))
+                .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_BANS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .build();
-
-        var reportManager = new ReportManager(databaseHandler);
-        var punisher = new Punisher(databaseHandler, reportManager);
 
         jda.addEventListener(new ListenerAdapter() {
             @Override
@@ -49,7 +49,7 @@ public class Bot {
             }
         });
 
-        // TODO: Add all commands (+ help)
+        // TODO: Add all commands (+ help, reason, duration)
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans
         // TODO: Ban message deletion argument

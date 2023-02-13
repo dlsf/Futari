@@ -70,8 +70,12 @@ public class ReportManager {
         });
     }
 
-    private boolean hasReportThread(User user) {
+    public boolean hasReportThread(User user) {
         return reportThreads.containsKey(user.getIdLong());
+    }
+
+    public long getReportThreadID(User user) {
+        return reportThreads.get(user.getIdLong());
     }
 
     private void createReportThread(User user) {
