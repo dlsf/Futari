@@ -108,7 +108,7 @@ public class BanCommand extends BotCommand {
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");
         var duration = durationOption == null ? "" : durationOption.getAsString();
-        var deletionInterval = deletionIntervalOption == null ? 0 : deletionIntervalOption.getAsInt();
+        var deletionInterval = deletionIntervalOption == null ? DEFAULT_INTERVAL : deletionIntervalOption.getAsInt();
         var comments = commentsOption == null ? "" : commentsOption.getAsString();
         var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
 
