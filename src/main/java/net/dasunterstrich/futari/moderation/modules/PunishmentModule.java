@@ -1,7 +1,7 @@
 package net.dasunterstrich.futari.moderation.modules;
 
 import net.dasunterstrich.futari.moderation.PunishmentResponse;
-import net.dasunterstrich.futari.reports.EvidenceMessage;
+import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;

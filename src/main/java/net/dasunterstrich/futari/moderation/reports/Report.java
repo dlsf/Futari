@@ -1,4 +1,4 @@
-package net.dasunterstrich.futari.reports;
+package net.dasunterstrich.futari.moderation.reports;
 
 import net.dasunterstrich.futari.moderation.PunishmentType;
 import net.dv8tion.jda.api.entities.User;

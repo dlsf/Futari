@@ -8,7 +8,7 @@ import net.dasunterstrich.futari.listener.GuildMemberJoinListener;
 import net.dasunterstrich.futari.listener.UsernameUpdateListener;
 import net.dasunterstrich.futari.moderation.Punisher;
 import net.dasunterstrich.futari.moderation.TimedPunishmentHandler;
-import net.dasunterstrich.futari.reports.ReportManager;
+import net.dasunterstrich.futari.moderation.reports.ReportManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -50,7 +50,7 @@ public class Bot {
         });
 
         // TODO: Migrate to Postgres
-        // TODO: Add all commands (+ reason, duration)
+        // TODO: Add DelWarn, Reason, Deletion commands
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans
         // TODO: Ban message deletion argument
@@ -58,8 +58,6 @@ public class Bot {
         // TODO: Right-click user interactions
         // TODO: Message attachments
         // TODO: Modlog channel
-        // TODO: Unpunish flag instead of delete
-        // TODO: Remove unnecessary unmute/unban arguments
 
         commandManager.addCommand(new HelpCommand(commandManager));
         commandManager.addCommand(new BanCommand(punisher));

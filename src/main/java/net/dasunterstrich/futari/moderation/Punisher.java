@@ -2,9 +2,9 @@ package net.dasunterstrich.futari.moderation;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.moderation.modules.*;
-import net.dasunterstrich.futari.reports.EvidenceMessage;
-import net.dasunterstrich.futari.reports.Report;
-import net.dasunterstrich.futari.reports.ReportManager;
+import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
+import net.dasunterstrich.futari.moderation.reports.Report;
+import net.dasunterstrich.futari.moderation.reports.ReportManager;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;

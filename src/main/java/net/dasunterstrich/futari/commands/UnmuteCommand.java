@@ -2,7 +2,7 @@ package net.dasunterstrich.futari.commands;
 
 import net.dasunterstrich.futari.commands.internal.BotCommand;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.reports.EvidenceMessage;
+import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;

@@ -1,7 +1,7 @@
 package net.dasunterstrich.futari.moderation;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
-import net.dasunterstrich.futari.reports.EvidenceMessage;
+import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import org.slf4j.Logger;
@@ -12,7 +12,6 @@ import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TimedPunishmentHandler {
     private final Logger logger = LoggerFactory.getLogger(getClass());

@@ -1,4 +1,4 @@
-package net.dasunterstrich.futari.reports;
+package net.dasunterstrich.futari.moderation.reports;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.utils.DurationUtils;
@@ -65,7 +65,9 @@ public class ReportManager {
 
             // TODO: Reminders
             if (report.getReportedMessage().messageContent() == null && report.getReportedMessage().messageAttachments().isEmpty()) {
-                thread.sendMessage(report.getModerator().getAsMention() + " Please post the evidence for this punishment").queue();
+                thread.sendMessage(report.getModerator().getAsMention() + " Please post the evidence for this punishment").queue(message -> {
+                    // TODO: Add message to database
+                });
             }
         });
     }
