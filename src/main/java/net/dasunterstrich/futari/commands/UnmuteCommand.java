@@ -27,7 +27,7 @@ public class UnmuteCommand extends BotCommand {
     public CommandData getCommandData() {
         return Commands.slash("unmute", "Unmute a user")
                 .addOption(OptionType.USER, "user", "The user to unmute", true)
-                .addOption(OptionType.STRING, "reason", "Reason for the unmute", false)
+                .addOption(OptionType.STRING, "reason", "Reason for the unmute", true)
                 .addOption(OptionType.STRING, "comments", "Further comments for other moderators", false)
                 .addOption(OptionType.ATTACHMENT, "evidence", "Screenshot of additional evidence", false);
     }
@@ -47,7 +47,7 @@ public class UnmuteCommand extends BotCommand {
         }
 
         var targetMember = targetMemberOptional.get();
-        var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length)); // TODO: Unmute without reason
+        var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
 
         punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, "", EvidenceMessage.none());
 
@@ -57,7 +57,7 @@ public class UnmuteCommand extends BotCommand {
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
         var targetMember = event.getOption("user").getAsMember();
-        var reason = event.getOption("reason").getAsString(); // TODO: Unmute without reason
+        var reason = event.getOption("reason").getAsString();
 
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");

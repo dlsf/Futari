@@ -49,6 +49,7 @@ public class Bot {
             }
         });
 
+        // TODO: Migrate to Postgres
         // TODO: Add all commands (+ reason, duration)
         // TODO: Better error handling in commands
         // TODO: Update old mutes/bans

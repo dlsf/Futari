@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TimedPunishmentHandler {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -41,8 +42,8 @@ public class TimedPunishmentHandler {
             while (resultSet.next()) {
                 var user = resultSet.getLong("user_id");
                 var type = resultSet.getString("type");
-                revokePunishments(user, PunishmentType.valueOf(type));
 
+                revokePunishments(user, PunishmentType.valueOf(type));
                 revokedPunishments.add(resultSet.getInt("report_id"));
             }
 
@@ -60,16 +61,22 @@ public class TimedPunishmentHandler {
         }
     }
 
-    private void revokePunishments(long userID, PunishmentType punishmentType) throws SQLException {
+    private void revokePunishments(long userID, PunishmentType punishmentType) {
         switch (punishmentType) {
             case BAN -> {
-                jda.retrieveUserById(userID).queue(user -> {
-                    punisher.unban(guild, user, guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
+                jda.retrieveUserById(userID).mapToResult().queue(result -> {
+                    // Return if account no longer exists
+                    if (result.isFailure()) return;
+
+                    punisher.unban(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
                 });
             }
             case MUTE -> {
-                guild.retrieveMemberById(userID).queue(member -> {
-                    punisher.unmute(guild, member, guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
+                guild.retrieveMemberById(userID).mapToResult().queue(result -> {
+                    // Return if account is no longer on guild or does no longer exist
+                    if (result.isFailure()) return;
+
+                    punisher.unmute(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
                 });
             }
             default -> {
