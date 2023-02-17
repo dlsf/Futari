@@ -92,7 +92,7 @@ public class ModlogCommand extends BotCommand {
         var moderator = jda.getUserById(moderatorID);
         var moderatorString = moderator == null ? "Unknown (" + moderatorID + ")" : moderator.getAsMention();
 
-        stringBuilder.append("#").append(id).append(": **").append(punishmentType.getName()).append("**\n");
+        stringBuilder.append("Case #").append(id).append(": **").append(punishmentType.getName()).append("**\n");
         stringBuilder.append("**Reason**: ").append(reason).append("\n");
         stringBuilder.append("**Moderator**: ").append(moderatorString).append("\n");
 

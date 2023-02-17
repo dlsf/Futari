@@ -24,6 +24,10 @@ public class BanModule extends PunishmentModule{
 
     @Override
     public PunishmentResponse apply(Guild guild, Member member, Member moderator, String reason, String duration, String comments, EvidenceMessage evidenceMessage) {
+        return apply(guild, member, moderator, reason, duration, 1, comments, evidenceMessage);
+    }
+
+    public PunishmentResponse apply(Guild guild, Member member, Member moderator, String reason, String duration, int deletionInterval, String comments, EvidenceMessage evidenceMessage) {
         if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
 
         // DM user
@@ -38,7 +42,7 @@ public class BanModule extends PunishmentModule{
 
         // Ban user
         try {
-            guild.ban(member, 3, TimeUnit.HOURS).reason(reason + "(" + duration + ")").queue();
+            guild.ban(member, deletionInterval, TimeUnit.HOURS).reason(reason + "(" + duration + ")").queue();
         } catch (Exception exception) {
             exception.printStackTrace();
             return PunishmentResponse.failed();

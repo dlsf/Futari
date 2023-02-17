@@ -4,10 +4,11 @@ import net.dasunterstrich.futari.commands.*;
 import net.dasunterstrich.futari.commands.internal.CommandManager;
 import net.dasunterstrich.futari.database.DatabaseHandler;
 import net.dasunterstrich.futari.listener.ChannelCreateListener;
+import net.dasunterstrich.futari.listener.CommandAutoCompleteListener;
 import net.dasunterstrich.futari.listener.GuildMemberJoinListener;
 import net.dasunterstrich.futari.listener.UsernameUpdateListener;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.moderation.TimedPunishmentHandler;
+import net.dasunterstrich.futari.scheduler.TimedPunishmentHandler;
 import net.dasunterstrich.futari.moderation.reports.ReportManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -35,7 +36,7 @@ public class Bot {
 
         JDA jda = JDABuilder.createDefault(readToken())
                 .setActivity(Activity.playing("with Bocchicord"))
-                .addEventListeners(commandManager, new ChannelCreateListener(), new GuildMemberJoinListener(databaseHandler), new UsernameUpdateListener(reportManager))
+                .addEventListeners(commandManager, new ChannelCreateListener(), new GuildMemberJoinListener(databaseHandler), new UsernameUpdateListener(reportManager), new CommandAutoCompleteListener())
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_BANS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .build();
@@ -57,7 +58,6 @@ public class Bot {
         // TODO: Alt linking
         // TODO: Right-click user interactions
         // TODO: Message attachments
-        // TODO: Modlog channel
 
         commandManager.addCommand(new HelpCommand(commandManager));
         commandManager.addCommand(new BanCommand(punisher));

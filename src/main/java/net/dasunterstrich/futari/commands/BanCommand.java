@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 public class BanCommand extends BotCommand {
+    private final int DEFAULT_INTERVAL = 1;
     private final Punisher punisher;
 
     public BanCommand(Punisher punisher) {
@@ -39,6 +40,7 @@ public class BanCommand extends BotCommand {
                 .addOption(OptionType.USER, "user", "The user to ban", true)
                 .addOption(OptionType.STRING, "reason", "Reason for the ban", true)
                 .addOption(OptionType.STRING, "duration", "Duration of the ban", false)
+                .addOption(OptionType.INTEGER, "delete_messages", "How many messages should be deleted", false, true)
                 .addOption(OptionType.STRING, "comments", "Further comments for other moderators", false)
                 .addOption(OptionType.ATTACHMENT, "evidence", "Screenshot of additional evidence", false);
     }
@@ -90,7 +92,7 @@ public class BanCommand extends BotCommand {
         }
 
         // TODO: Error handling
-        var bannable = punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, "", EvidenceMessage.none());
+        var bannable = punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, DEFAULT_INTERVAL, "", EvidenceMessage.none());
         if (!bannable.success()) return;
 
         event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was banned", "**Reason**: " + reason)).queue();
@@ -101,15 +103,17 @@ public class BanCommand extends BotCommand {
         var targetMember = event.getOption("user").getAsMember();
         var reason = event.getOption("reason").getAsString();
 
+        var durationOption = event.getOption("duration");
+        var deletionIntervalOption = event.getOption("delete_messages");
         var commentsOption = event.getOption("comments");
         var evidenceOption = event.getOption("evidence");
-        var durationOption = event.getOption("duration");
+        var duration = durationOption == null ? "" : durationOption.getAsString();
+        var deletionInterval = deletionIntervalOption == null ? 0 : deletionIntervalOption.getAsInt();
         var comments = commentsOption == null ? "" : commentsOption.getAsString();
         var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
-        var duration = durationOption == null ? "" : durationOption.getAsString();
 
         // TODO: Error handling
-        punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidence);
+        punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, deletionInterval, comments, evidence);
 
         event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " banned", "**Reason**: " + reason)).queue();
     }
@@ -126,7 +130,7 @@ public class BanCommand extends BotCommand {
                     var duration = event.getInteraction().getValue("duration").getAsString();
                     var comments = event.getInteraction().getValue("comments").getAsString();
 
-                    var bannable = punisher.ban(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new EvidenceMessage(message.getContentRaw(), message.getAttachments()));
+                    var bannable = punisher.ban(event.getGuild(), targetUser, event.getMember(), reason, duration, DEFAULT_INTERVAL, comments, new EvidenceMessage(message.getContentRaw(), message.getAttachments()));
                     if (!bannable.success()) return;
 
                     event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was banned. **Reason**: " + reason)).queue();

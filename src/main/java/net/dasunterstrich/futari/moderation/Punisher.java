@@ -29,7 +29,7 @@ public class Punisher {
     public final ReportManager reportManager;
     public final ModlogManager modlogManager;
 
-    private final PunishmentModule banModule;
+    private final BanModule banModule;
     private final PunishmentModule muteModule;
     private final PunishmentModule warnModule;
     private final PunishmentModule kickModule;
@@ -45,8 +45,8 @@ public class Punisher {
         this.kickModule = new KickModule(this);
     }
 
-    public PunishmentResponse ban(Guild guild, Member member, Member moderator, String reason, String duration, String comments, EvidenceMessage evidenceMessage) {
-        return banModule.apply(guild, member, moderator, reason, duration, comments, evidenceMessage);
+    public PunishmentResponse ban(Guild guild, Member member, Member moderator, String reason, String duration, int deletionInterval, String comments, EvidenceMessage evidenceMessage) {
+        return banModule.apply(guild, member, moderator, reason, duration, deletionInterval, comments, evidenceMessage);
     }
 
     public PunishmentResponse unban(Guild guild, User user, Member moderator, String reason, String comment, EvidenceMessage evidenceMessage) {
