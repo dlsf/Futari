@@ -1,6 +1,7 @@
 package net.dasunterstrich.futari.moderation;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
+import net.dasunterstrich.futari.moderation.modlog.ModlogManager;
 import net.dasunterstrich.futari.moderation.modules.*;
 import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
 import net.dasunterstrich.futari.moderation.reports.Report;
@@ -26,6 +27,7 @@ public class Punisher {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final DatabaseHandler databaseHandler;
     public final ReportManager reportManager;
+    public final ModlogManager modlogManager;
 
     private final PunishmentModule banModule;
     private final PunishmentModule muteModule;
@@ -35,6 +37,7 @@ public class Punisher {
     public Punisher(DatabaseHandler databaseHandler, ReportManager reportManager) {
         this.databaseHandler = databaseHandler;
         this.reportManager = reportManager;
+        this.modlogManager = new ModlogManager();
 
         this.banModule = new BanModule(this);
         this.muteModule = new MuteModule(this);

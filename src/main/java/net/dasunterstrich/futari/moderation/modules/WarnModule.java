@@ -39,6 +39,8 @@ public class WarnModule extends PunishmentModule {
         report.setReportedMessage(evidenceMessage);
         punisher.reportManager.createReport(report);
 
+        punisher.modlogManager.createModlog(report);
+
         // Database Update
         var success = punisher.addPunishmentToDatabase(report);
         return new PunishmentResponse(success, true);
@@ -46,6 +48,7 @@ public class WarnModule extends PunishmentModule {
 
     @Override
     public PunishmentResponse revoke(Guild guild, User user, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
+        // TODO: Implement, don't forget to add to modlog
         return null;
     }
 }

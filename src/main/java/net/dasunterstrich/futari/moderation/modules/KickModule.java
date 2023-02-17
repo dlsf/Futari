@@ -39,6 +39,8 @@ public class KickModule extends PunishmentModule {
                     report.setReportedMessage(evidenceMessage);
                     punisher.reportManager.createReport(report);
 
+                    punisher.modlogManager.createModlog(report);
+
                     // Database Update
                     var success = punisher.addPunishmentToDatabase(report);
                     System.out.println(throwable.isFailure());

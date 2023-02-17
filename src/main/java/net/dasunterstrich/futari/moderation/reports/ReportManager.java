@@ -114,9 +114,7 @@ public class ReportManager {
 
         if (report.getDuration() != null) {
             stringBuilder.append(" (");
-
             stringBuilder.append(DurationUtils.toReadableDuration(report.getDuration()));
-
             stringBuilder.append(")");
         }
 
@@ -139,5 +137,4 @@ public class ReportManager {
 
         return stringBuilder.toString();
     }
-
 }
