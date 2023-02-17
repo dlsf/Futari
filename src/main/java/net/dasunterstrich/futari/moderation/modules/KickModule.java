@@ -37,7 +37,7 @@ public class KickModule extends PunishmentModule {
                     // Thread update
                     var report = new Report(PunishmentType.KICK, member.getUser(), moderator.getUser(), reason, comments);
                     report.setReportedMessage(evidenceMessage);
-                    punisher.reportManager.createReport(member.getUser(), report);
+                    punisher.reportManager.createReport(report);
 
                     // Database Update
                     var success = punisher.addPunishmentToDatabase(report);
@@ -51,6 +51,7 @@ public class KickModule extends PunishmentModule {
 
     @Override
     public PunishmentResponse revoke(Guild guild, User user, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
-        return null;
+        // Do nothing
+        return new PunishmentResponse(false, false);
     }
 }

@@ -48,7 +48,7 @@ public class BanModule extends PunishmentModule{
         var report = new Report(PunishmentType.BAN, member.getUser(), moderator.getUser(), reason, comments);
         report.setDuration(duration);
         report.setReportedMessage(evidenceMessage);
-        punisher.reportManager.createReport(member.getUser(), report);
+        punisher.reportManager.createReport(report);
 
         // Database Update
         var success = punisher.addPunishmentToDatabase(report);
@@ -63,7 +63,7 @@ public class BanModule extends PunishmentModule{
 
         var report = new Report(PunishmentType.UNBAN, user, moderator.getUser(), reason, comment);
         report.setReportedMessage(evidenceMessage);
-        punisher.reportManager.createReport(user, report);
+        punisher.reportManager.createReport(report);
 
         var success = punisher.addPunishmentToDatabase(report);
         return new PunishmentResponse(success, false);

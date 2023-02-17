@@ -44,9 +44,10 @@ public class ReportManager {
         this.guild = guild;
     }
 
-    public void createReport(User user, Report report) {
+    public void createReport(Report report) {
         if (!report.getReportType().isReportable()) return;
 
+        var user = report.getUser();
         executorService.execute(() -> {
             if (!hasReportThread(user)) createReportThread(user);
 

@@ -37,7 +37,7 @@ public class WarnModule extends PunishmentModule {
         // Thread update
         var report = new Report(PunishmentType.WARN, member.getUser(), moderator.getUser(), reason, comments);
         report.setReportedMessage(evidenceMessage);
-        punisher.reportManager.createReport(member.getUser(), report);
+        punisher.reportManager.createReport(report);
 
         // Database Update
         var success = punisher.addPunishmentToDatabase(report);

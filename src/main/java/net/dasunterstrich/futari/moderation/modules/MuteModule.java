@@ -41,7 +41,7 @@ public class MuteModule extends PunishmentModule {
         var report = new Report(PunishmentType.MUTE, member.getUser(), moderator.getUser(), reason, comments);
         report.setDuration(duration);
         report.setReportedMessage(evidenceMessage);
-        punisher.reportManager.createReport(member.getUser(), report);
+        punisher.reportManager.createReport(report);
 
         // Database Update
         var success = punisher.addPunishmentToDatabase(report);
@@ -67,7 +67,7 @@ public class MuteModule extends PunishmentModule {
 
             var report = new Report(PunishmentType.UNMUTE, user, moderator.getUser(), reason, comments);
             report.setReportedMessage(evidenceMessage);
-            punisher.reportManager.createReport(user, report);
+            punisher.reportManager.createReport(report);
 
             // Database update
             var success = punisher.addPunishmentToDatabase(report);
