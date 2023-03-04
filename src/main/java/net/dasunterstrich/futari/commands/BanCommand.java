@@ -6,6 +6,7 @@ import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
+import net.dasunterstrich.futari.utils.ExceptionUtils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
@@ -95,7 +96,7 @@ public class BanCommand extends BotCommand {
 
         punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, DEFAULT_INTERVAL, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
             if (throwable != null) {
-                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + ExceptionUtils.stringify(throwable))).queue();
                 return null;
             }
 
@@ -118,7 +119,7 @@ public class BanCommand extends BotCommand {
 
         punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, deletionInterval, comments, evidence).handleAsync((communicationResponse, throwable) -> {
             if (throwable != null) {
-                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + ExceptionUtils.stringify(throwable))).queue();
                 return null;
             }
 
@@ -143,7 +144,7 @@ public class BanCommand extends BotCommand {
 
             punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, DEFAULT_INTERVAL, comments, evidenceMessage).handleAsync((communicationResponse, throwable) -> {
                 if (throwable != null) {
-                    event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                    event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + ExceptionUtils.stringify(throwable))).queue();
                     return null;
                 }
 

@@ -5,6 +5,7 @@ import net.dasunterstrich.futari.moderation.Punisher;
 import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
 import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
+import net.dasunterstrich.futari.utils.ExceptionUtils;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -49,7 +50,7 @@ public class UnbanCommand extends BotCommand {
 
         punisher.unban(event.getGuild(), targetUser, event.getMember(), reason, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
             if (throwable != null) {
-                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not unban " + targetUser.getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not unban " + targetUser.getAsTag() + "!\n\n**Reason**: " + ExceptionUtils.stringify(throwable))).queue();
                 return null;
             }
 
@@ -68,7 +69,7 @@ public class UnbanCommand extends BotCommand {
 
         punisher.unban(event.getGuild(), targetUser, event.getMember(), reason, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
             if (throwable != null) {
-                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not unban " + targetUser.getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not unban " + targetUser.getAsTag() + "!\n\n**Reason**: " + ExceptionUtils.stringify(throwable))).queue();
                 return null;
             }
 
