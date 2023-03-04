@@ -31,13 +31,14 @@ public class HelpCommand extends BotCommand {
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
-        event.replyEmbeds(buildHelpEmbed()).queue();
+        event.replyEmbeds(buildHelpEmbed()).queue(s -> System.out.println(Thread.currentThread().getName()));
     }
 
     private MessageEmbed buildHelpEmbed() {
         var stringBuilder = new StringBuilder("**Please use Slash commands or the Apps menu!**\n\n");
         commandManager.getCommands().stream()
                 .map(BotCommand::getSyntax)
+                .sorted()
                 .forEach(syntax -> stringBuilder.append("`").append("!").append(syntax).append("`").append("\n"));
 
         var body = stringBuilder.toString();
