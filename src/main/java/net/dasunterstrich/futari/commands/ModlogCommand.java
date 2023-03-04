@@ -87,7 +87,7 @@ public class ModlogCommand extends BotCommand {
                 var timestamp = resultSet.getLong("timestamp");
                 var duration = resultSet.getString("duration");
 
-                appendToModlog(guild.getJDA(), stringBuilder, id, moderatorId, type, reason, timestamp, duration);
+                appendToModlog(stringBuilder, id, moderatorId, type, reason, timestamp, duration);
             } while (resultSet.next());
         } catch (Exception exception) {
             logger.error("Failed to check modlog", exception);
@@ -98,13 +98,10 @@ public class ModlogCommand extends BotCommand {
         return EmbedUtils.success("Modlog for " + user.getAsTag(), body.substring(0, body.length() - 1));
     }
 
-    private void appendToModlog(JDA jda, StringBuilder stringBuilder, int id, long moderatorID, PunishmentType punishmentType, String reason, long timestamp, String duration) {
-        var moderator = jda.retrieveUserById(moderatorID).complete();
-        var moderatorString = moderator == null ? "Unknown (" + moderatorID + ")" : moderator.getAsMention();
-
+    private void appendToModlog(StringBuilder stringBuilder, int id, long moderatorID, PunishmentType punishmentType, String reason, long timestamp, String duration) {
         stringBuilder.append("Case #").append(id).append(": **").append(punishmentType.getName()).append("**\n");
         stringBuilder.append("**Reason**: ").append(reason).append("\n");
-        stringBuilder.append("**Moderator**: ").append(moderatorString).append("\n");
+        stringBuilder.append("**Moderator**: ").append("<@").append(moderatorID).append(">").append("\n");
 
         if (!duration.isEmpty()) {
             stringBuilder.append("**Duration**: ").append(DurationUtils.toReadableDuration(duration)).append("\n");
