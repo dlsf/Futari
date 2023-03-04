@@ -7,12 +7,14 @@ import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -23,6 +25,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 public class MuteCommand extends BotCommand {
     private final Punisher punisher;
@@ -45,19 +48,18 @@ public class MuteCommand extends BotCommand {
 
     @Nullable
     @Override
-    public CommandData getModalCommandData() {
-        return Commands.context(Command.Type.MESSAGE, "mute_modal")
+    public CommandData getModalCommandData(Command.Type type) {
+        return Commands.context(type, "mute_modal")
                 .setName(getInteractionMenuName())
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS));
     }
 
     @Nullable
     @Override
-    public Modal buildModal(MessageContextInteractionEvent event) {
-        var message = event.getTarget();
-        var author = message.getAuthor();
+    public Modal buildModal(User user, Optional<Message> messageOptional) {
+        var messageID = messageOptional.map(Message::getId).orElse("NONE");
 
-        return Modal.create("mute:" + author.getId() + ":" + message.getId(), "Mute " + author.getAsTag())
+        return Modal.create("mute:" + user.getId() + ":" + messageID, "Mute " + user.getAsTag())
                 .addActionRows(ActionRow.of(TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH).setPlaceholder("Reason").setRequired(true).build()))
                 .addActionRows(ActionRow.of(TextInput.create("duration", "Duration (e.g. 3d)", TextInputStyle.SHORT).setPlaceholder("Duration").setRequired(false).build()))
                 .addActionRows(ActionRow.of(TextInput.create("comments", "Further comments", TextInputStyle.PARAGRAPH).setPlaceholder("Comments").setRequired(false).build()))
@@ -89,55 +91,63 @@ public class MuteCommand extends BotCommand {
             duration = "";
         }
 
-        // TODO: Error handling
-        var muteable = punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, "", EvidenceMessage.none());
-        if (!muteable.success()) return;
+        punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not mute " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was muted", "**Reason**: " + reason)).queue();
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " muted", text)).queue();
+            return null;
+        });
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
+        event.deferReply().queue();
+
         var targetMember = event.getOption("user").getAsMember();
         var reason = event.getOption("reason").getAsString();
+        var duration = optionalOption(event.getOption("duration"), OptionMapping::getAsString, "");
+        var comments = optionalOption(event.getOption("comments"), OptionMapping::getAsString, "");
+        var evidence = optionalOption(event.getOption("evidence"), option -> EvidenceMessage.ofEvidence(option.getAsAttachment()), EvidenceMessage.empty());
 
-        var commentsOption = event.getOption("comments");
-        var evidenceOption = event.getOption("evidence");
-        var durationOption = event.getOption("duration");
-        var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
-        var duration = durationOption == null ? "" : durationOption.getAsString();
+        punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidence).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not mute " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        // TODO: Error handling
-        punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidence);
-
-        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " muted", "**Reason**: " + reason)).queue();
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getHook().editOriginalEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " muted", text)).queue();
+            return null;
+        });
     }
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
-        try {
-            event.deferReply(true).queue();
+         event.deferReply(true).queue();
 
-            event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetUser -> {
-                var channel = event.getChannel();
-                channel.retrieveMessageById(event.getModalId().split(":")[2]).queue(message -> {
-                    var reason = event.getInteraction().getValue("reason").getAsString();
-                    var duration = event.getInteraction().getValue("duration").getAsString();
-                    var comments = event.getInteraction().getValue("comments").getAsString();
+         event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetMember -> {
+             var channel = event.getChannel();
+             var message = channel.retrieveMessageById(event.getModalId().split(":")[2]).complete();
 
-                    // TODO: Error handling
-                    var muteable = punisher.mute(event.getGuild(), targetUser, event.getMember(), reason, duration, comments, new EvidenceMessage(message.getContentRaw(), message.getAttachments()));
-                    if (!muteable.success()) return;
+             var reason = event.getInteraction().getValue("reason").getAsString();
+             var duration = event.getInteraction().getValue("duration").getAsString();
+             var comments = event.getInteraction().getValue("comments").getAsString();
+             var evidenceMessage = new EvidenceMessage(message.getContentRaw(), message.getAttachments());
 
-                    event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was muted. **Reason**: " + reason)).queue();
-                });
-            });
+             punisher.mute(event.getGuild(), targetMember, event.getMember(), reason, duration, comments, evidenceMessage).handleAsync((communicationResponse, throwable) -> {
+                 if (throwable != null) {
+                     event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not mute " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                     return null;
+                 }
 
-        } finally {
-            if (!event.isAcknowledged()) {
-                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** muted!")).setEphemeral(true).queue();
-            }
-        }
+                 var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+                 event.getHook().editOriginalEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " muted", text)).queue();
+                 return null;
+             });
+         });
     }
 }

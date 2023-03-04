@@ -3,15 +3,14 @@ package net.dasunterstrich.futari.commands.internal;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.UserContextInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class CommandManager extends ListenerAdapter {
     private final Set<BotCommand> commands = new LinkedHashSet<>();
@@ -26,7 +25,8 @@ public class CommandManager extends ListenerAdapter {
         for (var command : commands) {
             var commandData = command.getCommandData().setDefaultPermissions(DefaultMemberPermissions.enabledFor(command.getPermission()));
             set.add(commandData);
-            set.add(command.getModalCommandData());
+            set.add(command.getModalCommandData(Command.Type.MESSAGE));
+            set.add(command.getModalCommandData(Command.Type.USER));
         }
 
         set.removeIf(Objects::isNull);
@@ -70,7 +70,20 @@ public class CommandManager extends ListenerAdapter {
 
         if (executedCommand.get().getPermission() != null && !event.getMember().hasPermission(executedCommand.get().getPermission())) return;
 
-        event.replyModal(executedCommand.get().buildModal(event)).queue();
+        var message = event.getTarget();
+        event.replyModal(executedCommand.get().buildModal(message.getAuthor(), Optional.of(message))).queue();
+    }
+
+    @Override
+    public void onUserContextInteraction(UserContextInteractionEvent event) {
+        if (!event.isFromGuild()) return;
+
+        var executedCommand = commands.stream().filter(command -> event.getName().equals(command.getInteractionMenuName())).findAny();
+        if (executedCommand.isEmpty()) return;
+
+        if (executedCommand.get().getPermission() != null && !event.getMember().hasPermission(executedCommand.get().getPermission())) return;
+
+        event.replyModal(executedCommand.get().buildModal(event.getTarget(), Optional.empty())).queue();
     }
 
     @Override

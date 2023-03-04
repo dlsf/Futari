@@ -69,7 +69,7 @@ public class TimedPunishmentHandler {
                     // Return if account no longer exists
                     if (result.isFailure()) return;
 
-                    punisher.unban(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
+                    punisher.unban(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.empty());
                 });
             }
             case MUTE -> {
@@ -77,7 +77,7 @@ public class TimedPunishmentHandler {
                     // Return if account is no longer on guild or does no longer exist
                     if (result.isFailure()) return;
 
-                    punisher.unmute(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.none());
+                    punisher.unmute(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.empty());
                 });
             }
             default -> {

@@ -11,7 +11,7 @@ public class CommandAutoCompleteListener extends ListenerAdapter {
         }
 
         event.replyChoice("Don't Delete Any", 0)
-                .addChoice("Previous Hour", 1)
+                .addChoice("Previous Hour (Default)", 1)
                 .addChoice("Previous 3 Hours", 3)
                 .addChoice("Previous Day", 24)
                 .addChoice("Previous 7 Days", 24 * 7)

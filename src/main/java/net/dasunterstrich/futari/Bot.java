@@ -8,8 +8,8 @@ import net.dasunterstrich.futari.listener.CommandAutoCompleteListener;
 import net.dasunterstrich.futari.listener.GuildMemberJoinListener;
 import net.dasunterstrich.futari.listener.UsernameUpdateListener;
 import net.dasunterstrich.futari.moderation.Punisher;
-import net.dasunterstrich.futari.scheduler.TimedPunishmentHandler;
 import net.dasunterstrich.futari.moderation.reports.ReportManager;
+import net.dasunterstrich.futari.scheduler.TimedPunishmentHandler;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -51,13 +51,17 @@ public class Bot {
         });
 
         // TODO: Migrate to Postgres
-        // TODO: Add DelWarn, Reason, Deletion commands
-        // TODO: Better error handling in commands
+        // TODO: Add DelWarn, Reason commands
         // TODO: Update old mutes/bans
-        // TODO: Ban message deletion argument
         // TODO: Alt linking
         // TODO: Right-click user interactions
-        // TODO: Message attachments
+        // TODO: Message attachments in report threads
+        // TODO: Not being able to punish equally ranked users
+        // TODO: Config
+        // TODO: Handle deleted messages
+
+        // TODO: Handle NONE messages (user interactions)
+        // TODO: Investigate if queue Consumer is async
 
         commandManager.addCommand(new HelpCommand(commandManager));
         commandManager.addCommand(new BanCommand(punisher));

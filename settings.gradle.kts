@@ -1,2 +1,2 @@
-rootProject.name = "Bocchi-chan"
+rootProject.name = "Futari"
 

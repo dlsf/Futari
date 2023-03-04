@@ -27,9 +27,7 @@ public class UnbanCommand extends BotCommand {
     public CommandData getCommandData() {
         return Commands.slash("unban", "Unban a user")
                 .addOption(OptionType.USER, "user", "The user to unban", true)
-                .addOption(OptionType.STRING, "reason", "Reason for the unban", true)
-                .addOption(OptionType.STRING, "comments", "Further comments for other moderators", false)
-                .addOption(OptionType.ATTACHMENT, "evidence", "Screenshot of additional evidence", false);
+                .addOption(OptionType.STRING, "reason", "Reason for the unban", true);
     }
 
     @Override
@@ -49,23 +47,35 @@ public class UnbanCommand extends BotCommand {
         var targetUser = targetUserOptional.get();
         var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
 
-        punisher.unban(event.getGuild(), targetUser, event.getMember(), reason, "", EvidenceMessage.none());
+        punisher.unban(event.getGuild(), targetUser, event.getMember(), reason, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not unban " + targetUser.getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetUser.getAsTag() + " unbanned", "**Reason**: " + reason)).queue();
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetUser.getAsTag() + " unbanned", text)).queue();
+            return null;
+        });
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
+        event.deferReply().queue();
+
         var targetUser = event.getOption("user").getAsUser();
         var reason = event.getOption("reason").getAsString();
 
-        var commentsOption = event.getOption("comments");
-        var evidenceOption = event.getOption("evidence");
-        var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
+        punisher.unban(event.getGuild(), targetUser, event.getMember(), reason, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not unban " + targetUser.getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        punisher.unban(event.getGuild(), targetUser, event.getMember(), reason, comments, evidence);
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getAsTag() + " unbanned", text)).queue();
+            return null;
+        });
 
-        event.replyEmbeds(EmbedUtils.success(targetUser.getAsTag() + " unbanned", "**Reason**: " + reason)).queue();
     }
 }

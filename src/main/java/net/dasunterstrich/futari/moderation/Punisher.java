@@ -1,6 +1,8 @@
 package net.dasunterstrich.futari.moderation;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
+import net.dasunterstrich.futari.moderation.exceptions.DirectMessagesClosedException;
+import net.dasunterstrich.futari.moderation.exceptions.PunishmentFailedException;
 import net.dasunterstrich.futari.moderation.modlog.ModlogManager;
 import net.dasunterstrich.futari.moderation.modules.*;
 import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
@@ -9,8 +11,10 @@ import net.dasunterstrich.futari.moderation.reports.ReportManager;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.*;
-import net.dv8tion.jda.api.utils.Result;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +22,9 @@ import java.awt.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
 public class Punisher {
     private final Logger logger = LoggerFactory.getLogger(getClass());
@@ -45,60 +49,75 @@ public class Punisher {
         this.kickModule = new KickModule(this);
     }
 
-    public PunishmentResponse ban(Guild guild, Member member, Member moderator, String reason, String duration, int deletionInterval, String comments, EvidenceMessage evidenceMessage) {
+    public CompletableFuture<CommunicationResponse> ban(Guild guild, Member member, Member moderator, String reason, String duration, int deletionInterval, String comments, EvidenceMessage evidenceMessage) {
         return banModule.apply(guild, member, moderator, reason, duration, deletionInterval, comments, evidenceMessage);
     }
 
-    public PunishmentResponse unban(Guild guild, User user, Member moderator, String reason, String comment, EvidenceMessage evidenceMessage) {
+    public CompletableFuture<CommunicationResponse> unban(Guild guild, User user, Member moderator, String reason, String comment, EvidenceMessage evidenceMessage) {
         return banModule.revoke(guild, user, moderator, reason, comment, evidenceMessage);
     }
 
-    public PunishmentResponse mute(Guild guild, Member member, Member moderator, String reason, String duration, String comments, EvidenceMessage evidenceMessage) {
+    public CompletableFuture<CommunicationResponse> mute(Guild guild, Member member, Member moderator, String reason, String duration, String comments, EvidenceMessage evidenceMessage) {
         return muteModule.apply(guild, member, moderator, reason, duration, comments, evidenceMessage);
     }
 
-    public PunishmentResponse unmute(Guild guild, Member member, Member moderator, String reason, String comment, EvidenceMessage evidenceMessage) {
+    public CompletableFuture<CommunicationResponse> unmute(Guild guild, Member member, Member moderator, String reason, String comment, EvidenceMessage evidenceMessage) {
         return muteModule.revoke(guild, member.getUser(), moderator, reason, comment, evidenceMessage);
     }
 
-    public PunishmentResponse warn(Guild guild, Member member, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
+    public CompletableFuture<CommunicationResponse> warn(Guild guild, Member member, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
         return warnModule.apply(guild, member, moderator, reason, comments, evidenceMessage);
     }
 
-    public PunishmentResponse unwarn(Guild guild, int punishmentID, Member member, Member moderator, String reason) {
-        if (!moderator.hasPermission(Permission.BAN_MEMBERS)) return PunishmentResponse.failed();
+    public CompletableFuture<CommunicationResponse> unwarn(Guild guild, int punishmentID, Member member, Member moderator, String reason) {
+        return CompletableFuture.supplyAsync(() -> {
+            if (!moderator.hasPermission(Permission.BAN_MEMBERS)) throw new IllegalStateException("Not a moderator");
 
-        // DM user
-        contactUserAndThen(
-                member.getUser(),
-                EmbedUtils.custom(
-                        "Your warn from " + guild.getName() + " got revoked",
-                        "**Reason**: " + reason,
-                        Color.GREEN),
-                result -> {}
-        );
+            // DM user
+            try {
+                contactUser(
+                        member.getUser(),
+                        EmbedUtils.custom(
+                                "Your warn from " + guild.getName() + " got revoked",
+                                "**Reason**: " + reason,
+                                Color.GREEN)
+                );
+            } catch (DirectMessagesClosedException exception) {
+                return CommunicationResponse.FAILURE;
+            }
 
-        // Remove from database
-        try (var connection = databaseHandler.getConnection(); var statement = connection.createStatement()) {
-            statement.execute("DELETE FROM Punishments WHERE id = " + punishmentID);
-        } catch (Exception exception) {
-            logger.error("Could not revoke warn", exception);
-            return new PunishmentResponse(false, true);
-        }
+            return CommunicationResponse.SUCCESS;
+        }).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) throw new PunishmentFailedException(throwable);
 
-        return new PunishmentResponse(true, true);
+            // Remove from database
+            try (var connection = databaseHandler.getConnection(); var statement = connection.createStatement()) {
+                statement.execute("DELETE FROM Punishments WHERE id = " + punishmentID);
+            } catch (Exception exception) {
+                logger.error("Could not revoke warn", exception);
+                throw new PunishmentFailedException("Communication with database failed");
+            }
+
+            var report = new Report(PunishmentType.UNWARN, member.getUser(), moderator.getUser(), reason, "");
+            modlogManager.createModlog(report);
+
+            return communicationResponse;
+        });
     }
 
-    public PunishmentResponse kick(Guild guild, Member member, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
+    public CompletableFuture<CommunicationResponse> kick(Guild guild, Member member, Member moderator, String reason, String comments, EvidenceMessage evidenceMessage) {
         return kickModule.apply(guild, member, moderator, reason, comments, evidenceMessage);
     }
 
-    public void contactUserAndThen(User user, MessageEmbed embed, Consumer<? super Result<Message>> action) {
-        user.openPrivateChannel()
+    public void contactUser(User user, MessageEmbed embed) throws DirectMessagesClosedException {
+        var result = user.openPrivateChannel()
                 .flatMap(privateChannel -> privateChannel.sendMessageEmbeds(embed))
                 .mapToResult()
-                .queue(action);
+                .complete();
 
+        if (result.isFailure()) {
+            throw new DirectMessagesClosedException();
+        }
     }
 
     public boolean addPunishmentToDatabase(Report report) {

@@ -26,15 +26,15 @@ public class HelpCommand extends BotCommand {
 
     @Override
     public void onTextCommand(MessageReceivedEvent event) {
-        event.getChannel().sendMessageEmbeds(buildHelpEmbed("!")).queue();
+        event.getChannel().sendMessageEmbeds(buildHelpEmbed()).queue();
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
-        event.replyEmbeds(buildHelpEmbed("/")).queue();
+        event.replyEmbeds(buildHelpEmbed()).queue();
     }
 
-    private MessageEmbed buildHelpEmbed(String prefix) {
+    private MessageEmbed buildHelpEmbed() {
         var stringBuilder = new StringBuilder("**Please use Slash commands or the Apps menu!**\n\n");
         commandManager.getCommands().stream()
                 .map(BotCommand::getSyntax)

@@ -19,8 +19,12 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class ModlogCommand extends BotCommand {
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private final DatabaseHandler databaseHandler;
 
     public ModlogCommand(DatabaseHandler databaseHandler) {
@@ -37,27 +41,33 @@ public class ModlogCommand extends BotCommand {
 
     @Override
     public void onTextCommand(MessageReceivedEvent event) {
-        var words = event.getMessage().getContentRaw().split(" ");
-        if (words.length == 0) {
-            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!modlog <User>`")).queue();
-            return;
-        }
+        executor.submit(() -> {
+            var words = event.getMessage().getContentRaw().split(" ");
+            if (words.length == 0) {
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Please use `!modlog <User>`")).queue();
+                return;
+            }
 
-        var targetUserOptional = DiscordUtils.parseStringAsUser(event.getJDA(), words[1]);
-        if (targetUserOptional.isEmpty()) {
-            event.getChannel().sendMessageEmbeds(EmbedUtils.error("Cannot check modlog, invalid user provided")).queue();
-            return;
-        }
+            var targetUserOptional = DiscordUtils.parseStringAsUser(event.getJDA(), words[1]);
+            if (targetUserOptional.isEmpty()) {
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Cannot check modlog, invalid user provided")).queue();
+                return;
+            }
 
-        var targetUser = targetUserOptional.get();
-        event.getChannel().sendMessageEmbeds(buildModlogEmbed(event.getGuild(), targetUser)).queue();
+            var targetUser = targetUserOptional.get();
+            event.getChannel().sendMessageEmbeds(buildModlogEmbed(event.getGuild(), targetUser)).queue();
+        });
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
-        var user = event.getOption("user").getAsUser();
+        event.deferReply().queue();
 
-        event.replyEmbeds(buildModlogEmbed(event.getGuild(), user)).queue();
+        executor.submit(() -> {
+            var user = event.getOption("user").getAsUser();
+
+            event.getHook().editOriginalEmbeds(buildModlogEmbed(event.getGuild(), user)).queue();
+        });
     }
 
     private MessageEmbed buildModlogEmbed(Guild guild, User user) {

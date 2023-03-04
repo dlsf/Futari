@@ -7,12 +7,14 @@ import net.dasunterstrich.futari.utils.DiscordUtils;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -23,6 +25,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 public class BanCommand extends BotCommand {
     private final int DEFAULT_INTERVAL = 1;
@@ -47,19 +50,18 @@ public class BanCommand extends BotCommand {
 
     @Nullable
     @Override
-    public CommandData getModalCommandData() {
-        return Commands.context(Command.Type.MESSAGE, "ban_modal")
+    public CommandData getModalCommandData(Command.Type type) {
+        return Commands.context(type, "ban_modal")
                 .setName(getInteractionMenuName())
                 .setDefaultPermissions(DefaultMemberPermissions.enabledFor(Permission.BAN_MEMBERS));
     }
 
     @Nullable
     @Override
-    public Modal buildModal(MessageContextInteractionEvent event) {
-        var message = event.getTarget();
-        var author = message.getAuthor();
+    public Modal buildModal(User user, Optional<Message> messageOptional) {
+        var messageID = messageOptional.map(Message::getId).orElse("NONE");
 
-        return Modal.create("ban:" + author.getId() + ":" + message.getId(), "Ban " + author.getAsTag())
+        return Modal.create("ban:" + user.getId() + ":" + messageID, "Ban " + user.getAsTag())
                 .addActionRows(ActionRow.of(TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH).setPlaceholder("Reason").setRequired(true).build()))
                 .addActionRows(ActionRow.of(TextInput.create("duration", "Duration (e.g. 3d)", TextInputStyle.SHORT).setPlaceholder("Duration").setRequired(false).build()))
                 .addActionRows(ActionRow.of(TextInput.create("comments", "Further comments", TextInputStyle.PARAGRAPH).setPlaceholder("Comments").setRequired(false).build()))
@@ -91,56 +93,64 @@ public class BanCommand extends BotCommand {
             duration = "";
         }
 
-        // TODO: Error handling
-        var bannable = punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, DEFAULT_INTERVAL, "", EvidenceMessage.none());
-        if (!bannable.success()) return;
+        punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, DEFAULT_INTERVAL, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " was banned", "**Reason**: " + reason)).queue();
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " banned", text)).queue();
+            return null;
+        });
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
+        event.deferReply().queue();
+
         var targetMember = event.getOption("user").getAsMember();
         var reason = event.getOption("reason").getAsString();
+        var duration = optionalOption(event.getOption("duration"), OptionMapping::getAsString, "");
+        var deletionInterval = optionalOption(event.getOption("delete_messages"), OptionMapping::getAsInt, DEFAULT_INTERVAL);
+        var comments = optionalOption(event.getOption("comments"), OptionMapping::getAsString, "");
+        var evidence = optionalOption(event.getOption("evidence"), option -> EvidenceMessage.ofEvidence(option.getAsAttachment()), EvidenceMessage.empty());
 
-        var durationOption = event.getOption("duration");
-        var deletionIntervalOption = event.getOption("delete_messages");
-        var commentsOption = event.getOption("comments");
-        var evidenceOption = event.getOption("evidence");
-        var duration = durationOption == null ? "" : durationOption.getAsString();
-        var deletionInterval = deletionIntervalOption == null ? DEFAULT_INTERVAL : deletionIntervalOption.getAsInt();
-        var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
+        punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, deletionInterval, comments, evidence).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        // TODO: Error handling
-        punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, deletionInterval, comments, evidence);
-
-        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " banned", "**Reason**: " + reason)).queue();
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getHook().editOriginalEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " banned", text)).queue();
+            return null;
+        });
     }
 
     @Override
     public void onModalInteraction(ModalInteractionEvent event) {
         event.deferReply(true).queue();
 
-        try {
-            event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetUser -> {
-                var channel = event.getChannel();
-                channel.retrieveMessageById(event.getModalId().split(":")[2]).queue(message -> {
-                    var reason = event.getInteraction().getValue("reason").getAsString();
-                    var duration = event.getInteraction().getValue("duration").getAsString();
-                    var comments = event.getInteraction().getValue("comments").getAsString();
+        event.getGuild().retrieveMemberById(event.getModalId().split(":")[1]).queue(targetMember -> {
+            var channel = event.getChannel();
+            var message = channel.retrieveMessageById(event.getModalId().split(":")[2]).complete();
 
-                    var bannable = punisher.ban(event.getGuild(), targetUser, event.getMember(), reason, duration, DEFAULT_INTERVAL, comments, new EvidenceMessage(message.getContentRaw(), message.getAttachments()));
-                    if (!bannable.success()) return;
+            var reason = event.getInteraction().getValue("reason").getAsString();
+            var duration = event.getInteraction().getValue("duration").getAsString();
+            var comments = event.getInteraction().getValue("comments").getAsString();
+            var evidenceMessage = new EvidenceMessage(message.getContentRaw(), message.getAttachments());
 
-                    event.getHook().editOriginalEmbeds(EmbedUtils.success(targetUser.getUser().getAsTag() + " was banned. **Reason**: " + reason)).queue();
-                });
+            punisher.ban(event.getGuild(), targetMember, event.getMember(), reason, duration, DEFAULT_INTERVAL, comments, evidenceMessage).handleAsync((communicationResponse, throwable) -> {
+                if (throwable != null) {
+                    event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not ban " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                    return null;
+                }
+
+                var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+                event.getHook().editOriginalEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " banned", text)).queue();
+                return null;
             });
-        } finally {
-            // TODO: Replace
-            if (!event.isAcknowledged()) {
-                event.replyEmbeds(EmbedUtils.error("An error occurred, the user was **not** banned!")).setEphemeral(true).queue();
-            }
-        }
+        });
     }
 }

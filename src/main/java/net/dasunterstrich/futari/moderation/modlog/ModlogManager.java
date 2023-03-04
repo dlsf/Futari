@@ -14,7 +14,7 @@ public class ModlogManager {
         var description = buildDescriptionString(report);
         var color =  report.getReportType().getColor();
 
-        modlogChannel.sendMessageEmbeds(EmbedUtils.custom(title, description, color)).queue();
+        modlogChannel.sendMessageEmbeds(EmbedUtils.customWithTimestamp(title, description, color)).queue();
     }
 
     private String buildTitle(Report report) {

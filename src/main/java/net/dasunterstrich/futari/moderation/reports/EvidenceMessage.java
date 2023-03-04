@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public record EvidenceMessage(@Nullable String messageContent, List<Message.Attachment> messageAttachments) {
-    public static EvidenceMessage none() {
+    public static EvidenceMessage empty() {
         return new EvidenceMessage(null, List.of());
     }
 

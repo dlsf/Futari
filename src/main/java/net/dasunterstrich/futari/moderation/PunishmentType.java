@@ -9,7 +9,8 @@ public enum PunishmentType {
     WARN("Warn", Color.YELLOW, true),
     KICK("Kick", Color.YELLOW, true),
     UNBAN("Unban", Color.GREEN, false),
-    UNMUTE("Unmute", Color.GREEN, false);
+    UNMUTE("Unmute", Color.GREEN, false),
+    UNWARN("Unwarn", Color.GREEN, false);
 
     private final String name;
     private final Color color;

@@ -1,13 +1,19 @@
 package net.dasunterstrich.futari.commands.internal;
 
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
+import java.util.function.Function;
 
 public abstract class BotCommand {
     public abstract CommandData getCommandData();
@@ -33,11 +39,11 @@ public abstract class BotCommand {
         this.syntax = syntax;
     }
 
-    public @Nullable CommandData getModalCommandData() {
+    public @Nullable CommandData getModalCommandData(Command.Type type) {
         return null;
     }
 
-    public @Nullable Modal buildModal(MessageContextInteractionEvent event) {
+    public @Nullable Modal buildModal(User user, Optional<Message> messageOptional) {
         return null;
     }
 
@@ -45,7 +51,7 @@ public abstract class BotCommand {
         // Do nothing
     }
 
-    public String getName() {
+    String getName() {
         return name;
     }
 
@@ -55,11 +61,19 @@ public abstract class BotCommand {
     }
 
     @Nullable
-    public Permission getPermission() {
+    Permission getPermission() {
         return permission;
     }
 
     public String getSyntax() {
         return syntax;
+    }
+
+    protected <T> T optionalOption(OptionMapping optionMapping, Function<OptionMapping, T> mapping, T defaultValue) {
+        if (optionMapping == null) {
+            return defaultValue;
+        }
+
+        return mapping.apply(optionMapping);
     }
 }

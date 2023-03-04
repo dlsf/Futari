@@ -27,9 +27,7 @@ public class UnmuteCommand extends BotCommand {
     public CommandData getCommandData() {
         return Commands.slash("unmute", "Unmute a user")
                 .addOption(OptionType.USER, "user", "The user to unmute", true)
-                .addOption(OptionType.STRING, "reason", "Reason for the unmute", true)
-                .addOption(OptionType.STRING, "comments", "Further comments for other moderators", false)
-                .addOption(OptionType.ATTACHMENT, "evidence", "Screenshot of additional evidence", false);
+                .addOption(OptionType.STRING, "reason", "Reason for the unmute", true);
     }
 
     @Override
@@ -49,23 +47,34 @@ public class UnmuteCommand extends BotCommand {
         var targetMember = targetMemberOptional.get();
         var reason = String.join(" ", Arrays.copyOfRange(words, 2, words.length));
 
-        punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, "", EvidenceMessage.none());
+        punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getChannel().sendMessageEmbeds(EmbedUtils.error("Could not unmute" + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " unmuted", "**Reason**: " + reason)).queue();
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getChannel().sendMessageEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " unmuted", text)).queue();
+            return null;
+        });
     }
 
     @Override
     public void onSlashCommand(SlashCommandInteractionEvent event) {
+        event.deferReply().queue();
+
         var targetMember = event.getOption("user").getAsMember();
         var reason = event.getOption("reason").getAsString();
 
-        var commentsOption = event.getOption("comments");
-        var evidenceOption = event.getOption("evidence");
-        var comments = commentsOption == null ? "" : commentsOption.getAsString();
-        var evidence = evidenceOption == null ? EvidenceMessage.none() : EvidenceMessage.ofEvidence(evidenceOption.getAsAttachment());
+        punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, "", EvidenceMessage.empty()).handleAsync((communicationResponse, throwable) -> {
+            if (throwable != null) {
+                event.getHook().editOriginalEmbeds(EmbedUtils.error("Could not unmute " + targetMember.getUser().getAsTag() + "!\n\n**Reason**: " + throwable.getMessage())).queue();
+                return null;
+            }
 
-        punisher.unmute(event.getGuild(), targetMember, event.getMember(), reason, comments, evidence);
-
-        event.replyEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " unmuted", "**Reason**: " + reason)).queue();
+            var text = "**Reason**: " + reason + (communicationResponse.isFailure() ? "\n\n**Warning: Could not contact user**" : "");
+            event.getHook().editOriginalEmbeds(EmbedUtils.success(targetMember.getUser().getAsTag() + " unmuted", text)).queue();
+            return null;
+        });
     }
 }
