@@ -7,6 +7,7 @@ import net.dasunterstrich.futari.moderation.modlog.ModlogManager;
 import net.dasunterstrich.futari.moderation.modules.*;
 import net.dasunterstrich.futari.moderation.reports.EvidenceMessage;
 import net.dasunterstrich.futari.moderation.reports.Report;
+import net.dasunterstrich.futari.moderation.reports.ReportCreationResponse;
 import net.dasunterstrich.futari.moderation.reports.ReportManager;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
@@ -38,10 +39,10 @@ public class Punisher {
     private final PunishmentModule warnModule;
     private final PunishmentModule kickModule;
 
-    public Punisher(DatabaseHandler databaseHandler, ReportManager reportManager) {
+    public Punisher(DatabaseHandler databaseHandler, ReportManager reportManager, ModlogManager modlogManager) {
         this.databaseHandler = databaseHandler;
         this.reportManager = reportManager;
-        this.modlogManager = new ModlogManager();
+        this.modlogManager = modlogManager;
 
         this.banModule = new BanModule(this);
         this.muteModule = new MuteModule(this);
@@ -120,11 +121,11 @@ public class Punisher {
         }
     }
 
-    public boolean addPunishmentToDatabase(Report report) {
+    public boolean addPunishmentToDatabase(Report report, ReportCreationResponse reportCreationResponse, long modlogMessageID) {
         if (report.getReason().equals("Auto")) return true;
 
-        try(var connection = databaseHandler.getConnection()) {
-            var statement = connection.prepareStatement("INSERT INTO Punishments (user_id, moderator_id, type, reason, comment, timestamp, duration) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        try (var connection = databaseHandler.getConnection()) {
+            var statement = connection.prepareStatement("INSERT INTO Punishments (user_id, moderator_id, type, reason, comment, timestamp, duration, report_message_id, modlog_message_id, reminder_message_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             statement.setLong(1, report.getUser().getIdLong());
             statement.setLong(2, report.getModerator().getIdLong());
             statement.setString(3, report.getReportType().name());
@@ -137,6 +138,10 @@ public class Punisher {
             } else {
                 statement.setString(7, report.getDuration());
             }
+
+            statement.setLong(8, reportCreationResponse.reportMessageID());
+            statement.setLong(9, modlogMessageID);
+            statement.setLong(10, reportCreationResponse.reminderMessageID());
 
             statement.executeUpdate();
             statement.close();

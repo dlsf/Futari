@@ -3,9 +3,10 @@ package net.dasunterstrich.futari.moderation.modlog;
 import net.dasunterstrich.futari.moderation.reports.Report;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dasunterstrich.futari.utils.EmbedUtils;
+import net.dv8tion.jda.api.entities.Message;
 
 public class ModlogManager {
-    public void createModlog(Report report) {
+    public long createModlog(Report report) {
         var jda = report.getUser().getJDA();
         var guild = jda.getGuildById(497092213034188806L);
         var modlogChannel = guild.getTextChannelById(1073722655628341429L);
@@ -14,7 +15,15 @@ public class ModlogManager {
         var description = buildDescriptionString(report);
         var color =  report.getReportType().getColor();
 
-        modlogChannel.sendMessageEmbeds(EmbedUtils.customWithTimestamp(title, description, color)).queue();
+        return modlogChannel.sendMessageEmbeds(EmbedUtils.customWithTimestamp(title, description, color)).complete().getIdLong();
+    }
+
+    public void updateModlogMessage(Message message, Report report) {
+        var title = buildTitle(report);
+        var description = buildDescriptionString(report);
+        var color =  report.getReportType().getColor();
+
+        message.editMessageEmbeds(EmbedUtils.customWithTimestamp(title, description, color)).complete();
     }
 
     private String buildTitle(Report report) {

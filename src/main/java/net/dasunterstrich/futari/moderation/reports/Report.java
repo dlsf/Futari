@@ -8,8 +8,8 @@ public class Report {
     private final PunishmentType punishmentType;
     private final User user;
     private final User moderator;
-    private final String reason;
     private final String comments;
+    private String reason;
     private String duration;
     private EvidenceMessage evidenceMessage;
 
@@ -27,6 +27,10 @@ public class Report {
 
     public void setReportedMessage(EvidenceMessage evidenceMessage) {
         this.evidenceMessage = evidenceMessage;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     public PunishmentType getReportType() {

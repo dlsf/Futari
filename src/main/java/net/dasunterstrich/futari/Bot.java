@@ -8,6 +8,7 @@ import net.dasunterstrich.futari.listener.CommandAutoCompleteListener;
 import net.dasunterstrich.futari.listener.GuildMemberJoinListener;
 import net.dasunterstrich.futari.listener.UsernameUpdateListener;
 import net.dasunterstrich.futari.moderation.Punisher;
+import net.dasunterstrich.futari.moderation.modlog.ModlogManager;
 import net.dasunterstrich.futari.moderation.reports.ReportManager;
 import net.dasunterstrich.futari.scheduler.TimedPunishmentHandler;
 import net.dv8tion.jda.api.JDA;
@@ -32,7 +33,8 @@ public class Bot {
         var databaseHandler = initializeDatabase();
         var commandManager = new CommandManager();
         var reportManager = new ReportManager(databaseHandler);
-        var punisher = new Punisher(databaseHandler, reportManager);
+        var modlogManager = new ModlogManager();
+        var punisher = new Punisher(databaseHandler, reportManager, modlogManager);
 
         JDA jda = JDABuilder.createDefault(readToken())
                 .setActivity(Activity.playing("with Bocchicord"))
@@ -51,7 +53,7 @@ public class Bot {
         });
 
         // TODO: Migrate to Postgres
-        // TODO: Add DelWarn, Reason commands
+        // TODO: Add DelWarn, Duration, Softban commands
         // TODO: Update old mutes/bans
         // TODO: Alt linking
         // TODO: Right-click user interactions
@@ -59,7 +61,7 @@ public class Bot {
         // TODO: Not being able to punish equally ranked users
         // TODO: Config
         // TODO: Handle deleted messages
-
+        // TODO: DM user at the end of the punishment process
         // TODO: Handle NONE messages (user interactions)
         // TODO: Investigate if queue Consumer is async
 
@@ -71,6 +73,7 @@ public class Bot {
         commandManager.addCommand(new UnbanCommand(punisher));
         commandManager.addCommand(new UnmuteCommand(punisher));
         commandManager.addCommand(new ModlogCommand(databaseHandler));
+        commandManager.addCommand(new ReasonCommand(databaseHandler, reportManager, modlogManager));
 
         jda.updateCommands().addCommands(commandManager.registeredCommandData()).queue();
         logger.info("Commands initialized");

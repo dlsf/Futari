@@ -58,11 +58,11 @@ public class BanModule extends PunishmentModule{
             report.setDuration(duration);
             report.setReportedMessage(evidenceMessage);
 
-            punisher.reportManager.createReport(report);
-            punisher.modlogManager.createModlog(report);
+            var reportCreationResponse = punisher.reportManager.createReport(report);
+            var modlogMessageID = punisher.modlogManager.createModlog(report);
 
             // Database Update
-            var success = punisher.addPunishmentToDatabase(report);
+            var success = punisher.addPunishmentToDatabase(report, reportCreationResponse, modlogMessageID);
             if (!success) throw new PunishmentFailedException("Communication with database failed");
 
             return communicationResponse;
@@ -80,10 +80,11 @@ public class BanModule extends PunishmentModule{
             var report = new Report(PunishmentType.UNBAN, user, moderator.getUser(), reason, comment);
             report.setReportedMessage(evidenceMessage);
 
-            punisher.reportManager.createReport(report);
-            punisher.modlogManager.createModlog(report);
+            var reportCreationResponse = punisher.reportManager.createReport(report);
+            var modlogMessageID = punisher.modlogManager.createModlog(report);
 
-            var success = punisher.addPunishmentToDatabase(report);
+            // Database Update
+            var success = punisher.addPunishmentToDatabase(report, reportCreationResponse, modlogMessageID);
             if (!success) throw new PunishmentFailedException("Communication with database failed");
 
             return CommunicationResponse.NONE;

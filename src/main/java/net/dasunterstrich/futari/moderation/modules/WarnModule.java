@@ -48,11 +48,11 @@ public class WarnModule extends PunishmentModule {
             var report = new Report(PunishmentType.WARN, member.getUser(), moderator.getUser(), reason, comments);
             report.setReportedMessage(evidenceMessage);
 
-            punisher.reportManager.createReport(report);
-            punisher.modlogManager.createModlog(report);
+            var reportCreationResponse = punisher.reportManager.createReport(report);
+            var modlogMessageID = punisher.modlogManager.createModlog(report);
 
             // Database Update
-            var success = punisher.addPunishmentToDatabase(report);
+            var success = punisher.addPunishmentToDatabase(report, reportCreationResponse, modlogMessageID);
             if (!success) throw new PunishmentFailedException("Communication with database failed");
 
             return communicationResponse;

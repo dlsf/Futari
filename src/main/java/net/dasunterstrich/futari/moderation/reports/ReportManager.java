@@ -1,24 +1,25 @@
 package net.dasunterstrich.futari.moderation.reports;
 
 import net.dasunterstrich.futari.database.DatabaseHandler;
+import net.dasunterstrich.futari.moderation.PunishmentType;
 import net.dasunterstrich.futari.utils.DurationUtils;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 public class ReportManager {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final ExecutorService executorService = Executors.newScheduledThreadPool(3);
     private final DatabaseHandler databaseHandler;
     private final Map<Long, Long> reportThreads = new ConcurrentHashMap<>();
     private Guild guild;
@@ -44,33 +45,74 @@ public class ReportManager {
         this.guild = guild;
     }
 
-    public void createReport(Report report) {
-        if (!report.getReportType().isReportable()) return;
+    public Report getReportByID(long reportID) throws SQLException, NoSuchElementException {
+        try (var connection = databaseHandler.getConnection(); var statement = connection.createStatement()) {
+            var resultSet = statement.executeQuery("SELECT * FROM Punishments WHERE id = " + reportID);
+            if (!resultSet.next()) throw new NoSuchElementException();
+
+            var punishmentType = resultSet.getString("type");
+            var userID = resultSet.getLong("user_id");
+            var moderatorID = resultSet.getLong("moderator_id");
+            var reason = resultSet.getString("reason");
+            var comment = resultSet.getString("comment");
+            var duration = resultSet.getString("duration");
+
+            var user = guild.retrieveMemberById(userID).complete().getUser();
+            var moderator = guild.retrieveMemberById(moderatorID).complete().getUser();
+
+            var report = new Report(PunishmentType.valueOf(punishmentType), user, moderator, reason, comment);
+            report.setDuration(duration);
+
+            return report;
+        }
+    }
+
+    public void updateReportMessage(Message message, Report report) {
+        var reportThread = message.getChannel().asThreadChannel();
+        if (reportThread.isArchived()) reportThread.getManager().setArchived(false).complete();
+
+        var embed = message.getEmbeds().get(0);
+        // TODO: Fix images
+        var image = embed.getImage();
+
+        var title = buildTitle(report);
+        var description = buildDescriptionString(report);
+
+        message.editMessageEmbeds(
+                new EmbedBuilder()
+                        .setTitle(title)
+                        .setColor(report.getReportType().getColor())
+                        .setDescription(description)
+                        .setTimestamp(Instant.now())
+                        .build()
+        ).complete();
+    }
+
+    public ReportCreationResponse createReport(Report report) {
+        if (!report.getReportType().isReportable()) return new ReportCreationResponse(-1, -1);
 
         var user = report.getUser();
-        executorService.execute(() -> {
-            if (!hasReportThread(user)) createReportThread(user);
+        if (!hasReportThread(user)) createReportThread(user);
 
-            var thread = guild.getThreadChannelById(reportThreads.get(user.getIdLong()));
-            var title = buildTitle(report);
-            var description = buildDescriptionString(report);
+        var thread = guild.getThreadChannelById(reportThreads.get(user.getIdLong()));
+        var title = buildTitle(report);
+        var description = buildDescriptionString(report);
 
-            thread.sendMessageEmbeds(
-                    new EmbedBuilder()
-                            .setTitle(title)
-                            .setColor(report.getReportType().getColor())
-                            .setDescription(description)
-                            .setTimestamp(Instant.now())
-                            .build()
-            ).queue();
+        var reportMessageID = thread.sendMessageEmbeds(
+                new EmbedBuilder()
+                        .setTitle(title)
+                        .setColor(report.getReportType().getColor())
+                        .setDescription(description)
+                        .setTimestamp(Instant.now())
+                        .build()
+        ).complete().getIdLong();
 
-            // TODO: Reminders
-            if (report.getReportedMessage().messageContent() == null && report.getReportedMessage().messageAttachments().isEmpty()) {
-                thread.sendMessage(report.getModerator().getAsMention() + " Please post the evidence for this punishment").queue(message -> {
-                    // TODO: Add message to database
-                });
-            }
-        });
+        if (report.getReportedMessage().messageContent() == null && report.getReportedMessage().messageAttachments().isEmpty()) {
+            var reminderMessageID = thread.sendMessage(report.getModerator().getAsMention() + " Please post the evidence for this punishment").complete().getIdLong();
+            return new ReportCreationResponse(reportMessageID, reminderMessageID);
+        }
+
+        return new ReportCreationResponse(reportMessageID, -1);
     }
 
     public boolean hasReportThread(User user) {
@@ -131,7 +173,8 @@ public class ReportManager {
             stringBuilder.append("\n**Comments**: ").append(report.getComments());
         }
 
-        if (report.getReportedMessage().messageContent() != null) {
+        var reportedMessage = report.getReportedMessage();
+        if (reportedMessage != null && reportedMessage.messageContent() != null) {
             stringBuilder.append("\n**Reported Message**: \n```").append(report.getReportedMessage().messageContent()).append("```");
         }
 
