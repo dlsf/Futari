@@ -53,7 +53,7 @@ public class DiscordUtils {
             try {
                 attachedFiles.add(AttachedFile.fromData(new URL(url).openStream(), DiscordUtils.getFileName(url)));
             } catch (IOException exception) {
-                LOGGER.warn("Could not convert attachment", exception);
+                LOGGER.warn("Could not convert attachment " + url);
             }
         }
 
