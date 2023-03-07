@@ -3,13 +3,11 @@ package net.dasunterstrich.futari;
 import net.dasunterstrich.futari.commands.*;
 import net.dasunterstrich.futari.commands.internal.CommandManager;
 import net.dasunterstrich.futari.database.DatabaseHandler;
-import net.dasunterstrich.futari.listener.ChannelCreateListener;
-import net.dasunterstrich.futari.listener.CommandAutoCompleteListener;
-import net.dasunterstrich.futari.listener.GuildMemberJoinListener;
-import net.dasunterstrich.futari.listener.UsernameUpdateListener;
+import net.dasunterstrich.futari.listener.*;
 import net.dasunterstrich.futari.moderation.Punisher;
 import net.dasunterstrich.futari.moderation.modlog.ModlogManager;
 import net.dasunterstrich.futari.moderation.reports.ReportManager;
+import net.dasunterstrich.futari.scheduler.MessageLogHandler;
 import net.dasunterstrich.futari.scheduler.TimedPunishmentHandler;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -35,10 +33,18 @@ public class Bot {
         var reportManager = new ReportManager(databaseHandler);
         var modlogManager = new ModlogManager();
         var punisher = new Punisher(databaseHandler, reportManager, modlogManager);
+        var messageLogHandler = new MessageLogHandler(databaseHandler);
 
         JDA jda = JDABuilder.createDefault(readToken())
                 .setActivity(Activity.playing("with Bocchicord"))
-                .addEventListeners(commandManager, new ChannelCreateListener(), new GuildMemberJoinListener(databaseHandler), new UsernameUpdateListener(reportManager), new CommandAutoCompleteListener())
+                .addEventListeners(
+                        commandManager,
+                        new ChannelCreationListener(),
+                        new GuildMemberJoinListener(databaseHandler),
+                        new UsernameUpdateListener(reportManager),
+                        new CommandAutoCompleteListener(),
+                        new MessageDeletionListener(messageLogHandler),
+                        new MessageCreationListener(messageLogHandler))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
                 .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_BANS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .build();
@@ -77,6 +83,16 @@ public class Bot {
 
         jda.updateCommands().addCommands(commandManager.registeredCommandData()).queue();
         logger.info("Commands initialized");
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                messageLogHandler.addMessagesToDatabase();
+                logger.info("Saved cached messages in database");
+                databaseHandler.closeDataSource();
+                logger.info("Database connection shutdown!");
+            }
+        });
     }
 
     private String readToken() {
@@ -91,14 +107,6 @@ public class Bot {
     private DatabaseHandler initializeDatabase() {
         var databaseHandler = new DatabaseHandler();
         databaseHandler.initializeDatabase();
-
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                databaseHandler.closeDataSource();
-                logger.info("Database connection shutdown!");
-            }
-        });
 
         logger.info("Database connection established!");
         return databaseHandler;

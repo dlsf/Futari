@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 
 public class TimedPunishmentHandler {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
     private final DatabaseHandler databaseHandler;
     private final Punisher punisher;
     private final JDA jda;
@@ -30,6 +29,7 @@ public class TimedPunishmentHandler {
         this.guild = guild;
 
         // TODO: Make this value higher?
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         executorService.scheduleAtFixedRate(this::checkForExpiredPunishments, 0, 1, TimeUnit.MINUTES);
     }
 

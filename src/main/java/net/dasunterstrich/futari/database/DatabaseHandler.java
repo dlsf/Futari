@@ -33,6 +33,7 @@ public class DatabaseHandler {
             statement.execute("CREATE TABLE IF NOT EXISTS ReportThreads (user_id INTEGER PRIMARY KEY, thread_id INTEGER)");
             statement.execute("CREATE TABLE IF NOT EXISTS Punishments (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, moderator_id INTEGER, type TEXT, reason TEXT, comment TEXT, timestamp INTEGER, duration TEXT, report_message_id INTEGER, modlog_message_id INTEGER, reminder_message_id INTEGER)");
             statement.execute("CREATE TABLE IF NOT EXISTS TemporaryPunishments (report_id INTEGER PRIMARY KEY, timestamp INTEGER, done INTEGER DEFAULT 0, FOREIGN KEY(report_id) REFERENCES Punishments(id))");
+            statement.execute("CREATE TABLE IF NOT EXISTS MessageHistory (message_id INTEGER PRIMARY KEY, user_id INTEGER, content TEXT, creation_time INTEGER, attachments TEXT)");
         } catch (SQLException exception) {
             logger.error("Could not create tables", exception);
             System.exit(-1);

@@ -7,7 +7,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.util.List;
 
-public class ChannelCreateListener extends ListenerAdapter {
+public class ChannelCreationListener extends ListenerAdapter {
     private final List<Permission> muteRolePermissions = List.of(Permission.MESSAGE_SEND, Permission.VIEW_CHANNEL, Permission.MESSAGE_ADD_REACTION);
 
     @Override
