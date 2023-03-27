@@ -60,7 +60,7 @@ public class MessageLogHandler {
 
     public void addMessagesToDatabase() {
         try (var connection = databaseHandler.getConnection()) {
-            var statement = connection.prepareStatement("INSERT INTO MessageHistory (message_id, user_id, content, creationTime, attachments) VALUES (?, ?, ?, ?, ?)");
+            var statement = connection.prepareStatement("INSERT INTO MessageHistory (message_id, user_id, content, creation_time, attachments) VALUES (?, ?, ?, ?, ?)");
 
             for (SimpleMessage message : messageHistory) {
                 // Not-so-atomic value, but I couldn't care less. It's not like they are super relevant, anyway
