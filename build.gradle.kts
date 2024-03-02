@@ -13,7 +13,7 @@ repositories {
 dependencies {
     implementation("com.zaxxer:HikariCP:5.0.1")
     implementation("org.xerial:sqlite-jdbc:3.40.1.0")
-    implementation("ch.qos.logback:logback-classic:1.4.7")
+    implementation("ch.qos.logback:logback-classic:1.5.1")
 
     implementation("net.dv8tion:JDA:5.0.0-beta.13") {
         exclude("opus-java")
