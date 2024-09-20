@@ -3,7 +3,7 @@ plugins {
     id("application")
 }
 
-group = "net.dasunterstrich"
+group = "moe.das"
 version = "1.0"
 
 repositories {
@@ -21,5 +21,5 @@ dependencies {
 }
 
 application {
-    mainClass.set("net.dasunterstrich.futari.Main")
+    mainClass.set("moe.das.futari.Main")
 }
