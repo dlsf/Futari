@@ -5,7 +5,6 @@ import moe.das.futari.moderation.exceptions.DirectMessagesClosedException;
 import moe.das.futari.moderation.exceptions.PunishmentFailedException;
 import moe.das.futari.moderation.modlog.ModlogManager;
 import moe.das.futari.moderation.modules.*;
-import net.dasunterstrich.futari.moderation.modules.*;
 import moe.das.futari.moderation.reports.EvidenceMessage;
 import moe.das.futari.moderation.reports.Report;
 import moe.das.futari.moderation.reports.ReportCreationResponse;

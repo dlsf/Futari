@@ -16,10 +16,6 @@ import java.util.Optional;
 import java.util.function.Function;
 
 public abstract class BotCommand {
-    public abstract CommandData getCommandData();
-    public abstract void onTextCommand(MessageReceivedEvent event);
-    public abstract void onSlashCommand(SlashCommandInteractionEvent event);
-
     private final String name;
     private final @Nullable String interactionMenuName;
     private final @Nullable Permission permission;
@@ -39,6 +35,12 @@ public abstract class BotCommand {
         this.syntax = syntax;
     }
 
+    public abstract CommandData getCommandData();
+
+    public abstract void onTextCommand(MessageReceivedEvent event);
+
+    public abstract void onSlashCommand(SlashCommandInteractionEvent event);
+
     public @Nullable CommandData getModalCommandData(Command.Type type) {
         return null;
     }
@@ -51,7 +53,7 @@ public abstract class BotCommand {
         // Do nothing
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 
@@ -61,7 +63,7 @@ public abstract class BotCommand {
     }
 
     @Nullable
-    Permission getPermission() {
+    public Permission getPermission() {
         return permission;
     }
 

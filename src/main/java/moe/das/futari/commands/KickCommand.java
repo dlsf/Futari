@@ -59,8 +59,8 @@ public class KickCommand extends BotCommand {
         var messageID = messageOptional.map(Message::getId).orElse("NONE");
 
         return Modal.create("kick:" + user.getId() + ":" + messageID, "Kick " + user.getAsTag())
-                .addActionRows(ActionRow.of(TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH).setPlaceholder("Reason").setRequired(true).build()))
-                .addActionRows(ActionRow.of(TextInput.create("comments", "Further comments", TextInputStyle.PARAGRAPH).setPlaceholder("Comments").setRequired(false).build()))
+                .addComponents(ActionRow.of(TextInput.create("reason", "Reason", TextInputStyle.PARAGRAPH).setPlaceholder("Reason").setRequired(true).build()))
+                .addComponents(ActionRow.of(TextInput.create("comments", "Further comments", TextInputStyle.PARAGRAPH).setPlaceholder("Comments").setRequired(false).build()))
                 .build();
     }
 

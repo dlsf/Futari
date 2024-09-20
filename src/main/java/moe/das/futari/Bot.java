@@ -2,10 +2,8 @@ package moe.das.futari;
 
 import moe.das.futari.commands.*;
 import moe.das.futari.listener.*;
-import net.dasunterstrich.futari.commands.*;
 import moe.das.futari.commands.internal.CommandManager;
 import moe.das.futari.database.DatabaseHandler;
-import net.dasunterstrich.futari.listener.*;
 import moe.das.futari.moderation.Punisher;
 import moe.das.futari.moderation.modlog.ModlogManager;
 import moe.das.futari.moderation.reports.ReportManager;
@@ -48,7 +46,7 @@ public class Bot {
                         new MessageDeletionListener(messageLogHandler),
                         new MessageCreationListener(messageLogHandler))
                 .setMemberCachePolicy(MemberCachePolicy.ALL)
-                .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_BANS, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
+                .enableIntents(GatewayIntent.GUILD_MEMBERS, GatewayIntent.GUILD_MODERATION, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT)
                 .build();
 
         jda.addEventListener(new ListenerAdapter() {
