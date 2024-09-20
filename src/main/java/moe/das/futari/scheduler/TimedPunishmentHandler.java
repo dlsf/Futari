@@ -52,9 +52,9 @@ public class TimedPunishmentHandler {
                 try {
                     statement.execute("UPDATE TemporaryPunishments SET done = 1 WHERE report_id = " + reportID);
 
-                    logger.debug("Revoked punishment with report ID " +  reportID);
+                    logger.debug("Revoked punishment with report ID {}", reportID);
                 } catch (SQLException exception) {
-                    logger.error("Could not remove expired punishment " + reportID, exception);
+                    logger.error("Could not remove expired punishment {}", reportID, exception);
                 }
             });
         } catch (Exception exception) {
@@ -72,6 +72,7 @@ public class TimedPunishmentHandler {
                     punisher.unban(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.empty());
                 });
             }
+
             case MUTE -> {
                 guild.retrieveMemberById(userID).mapToResult().queue(result -> {
                     // Return if account is no longer on guild or does no longer exist
@@ -80,8 +81,9 @@ public class TimedPunishmentHandler {
                     punisher.unmute(guild, result.get(), guild.getSelfMember(), "Auto", "", EvidenceMessage.empty());
                 });
             }
+
             default -> {
-                logger.warn("Encountered unexpected argument while automatically revoking punishment: " + punishmentType.name());
+                logger.warn("Encountered unexpected argument while automatically revoking punishment: {}", punishmentType.name());
             }
         }
     }

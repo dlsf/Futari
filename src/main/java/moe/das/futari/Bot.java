@@ -1,9 +1,9 @@
 package moe.das.futari;
 
 import moe.das.futari.commands.*;
-import moe.das.futari.listener.*;
 import moe.das.futari.commands.internal.CommandManager;
 import moe.das.futari.database.DatabaseHandler;
+import moe.das.futari.listener.*;
 import moe.das.futari.moderation.Punisher;
 import moe.das.futari.moderation.modlog.ModlogManager;
 import moe.das.futari.moderation.reports.ReportManager;
@@ -65,7 +65,7 @@ public class Bot {
         // TODO: Right-click user interactions
         // TODO: Message attachments in report threads
         // TODO: Not being able to punish equally ranked users
-        // TODO: Config
+        // TODO: Config (don't hardcode guild or channel ids, replace token.txt)
         // TODO: Handle deleted messages
         // TODO: DM user at the end of the punishment process
         // TODO: Handle NONE messages (user interactions)
@@ -84,20 +84,17 @@ public class Bot {
         jda.updateCommands().addCommands(commandManager.registeredCommandData()).queue();
         logger.info("Commands initialized");
 
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                messageLogHandler.addMessagesToDatabase();
-                logger.info("Saved cached messages in database");
-                databaseHandler.closeDataSource();
-                logger.info("Database connection shutdown!");
-            }
-        });
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            messageLogHandler.addMessagesToDatabase();
+            logger.info("Saved cached messages in database");
+            databaseHandler.closeDataSource();
+            logger.info("Database connection shutdown!");
+        }));
     }
 
     private String readToken() {
         try {
-            return Files.readAllLines(Path.of("token.txt")).get(0);
+            return Files.readAllLines(Path.of("token.txt")).getFirst();
         } catch (IOException e) {
             logger.error("Token not found, please create a token.txt");
             throw new RuntimeException(e);

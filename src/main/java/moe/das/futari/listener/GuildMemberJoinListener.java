@@ -30,6 +30,7 @@ public class GuildMemberJoinListener extends ListenerAdapter {
                 var type = resultSet.getString("type");
                 switch (type) {
                     case "UNMUTE" -> mute = false;
+
                     case "MUTE" -> {
                         // Mute if permanent
                         if (resultSet.getString("duration").isEmpty()) {
@@ -47,13 +48,13 @@ public class GuildMemberJoinListener extends ListenerAdapter {
                 addMutedRole(event.getGuild(), event.getMember());
             }
         } catch (Exception exception) {
-            logger.error("Failed to assign mute role to " + memberID, exception);
+            logger.error("Failed to assign mute role to {}", memberID, exception);
         }
     }
 
     private void addMutedRole(Guild guild, Member member) {
         guild.addRoleToMember(member.getUser(), guild.getRoleById(1073208950280953906L)).reason("Muted").queue();
 
-        logger.info("Assigned muted role to " + member.getUser().getAsTag() + " after rejoin");
+        logger.info("Assigned muted role to {} after rejoin", member.getUser().getAsTag());
     }
 }

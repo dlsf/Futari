@@ -94,6 +94,7 @@ public class ReportManager {
         var user = report.getUser();
         if (!hasReportThread(user)) createReportThread(user);
 
+        // TODO: Handle deleted threads
         var thread = guild.getThreadChannelById(reportThreads.get(user.getIdLong()));
         var title = buildTitle(report);
         var description = buildDescriptionString(report);

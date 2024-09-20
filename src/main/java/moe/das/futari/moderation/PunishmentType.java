@@ -3,7 +3,6 @@ package moe.das.futari.moderation;
 import java.awt.*;
 
 public enum PunishmentType {
-
     BAN("Ban", Color.RED, true),
     MUTE("Mute", Color.GRAY, true),
     WARN("Warn", Color.YELLOW, true),

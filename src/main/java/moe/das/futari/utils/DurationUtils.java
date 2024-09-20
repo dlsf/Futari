@@ -3,7 +3,6 @@ package moe.das.futari.utils;
 import java.util.regex.Pattern;
 
 public class DurationUtils {
-
     private static final Pattern durationPattern = Pattern.compile("(\\d+[mhd])");
     private static final int HOURS = 24;
     private static final int MINUTES = 60;

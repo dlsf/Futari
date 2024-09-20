@@ -81,17 +81,10 @@ public class MessageLogHandler {
     }
 
     private void refreshMessageCache() {
-        var deletionSet = new HashSet<SimpleMessage>();
-
-        for (SimpleMessage message : messageHistory) {
+        messageHistory.removeIf(message -> {
             var timeDifference = System.currentTimeMillis() - message.creationTime;
-
-            if (timeDifference > CACHE_DURATION) {
-                deletionSet.add(message);
-            }
-        }
-
-        messageHistory.removeAll(deletionSet);
+            return timeDifference > CACHE_DURATION;
+        });
     }
 
     public record SimpleMessage(long messageID, long userID, String content, List<String> attachments, long creationTime) {

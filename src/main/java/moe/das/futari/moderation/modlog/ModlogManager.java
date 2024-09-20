@@ -12,7 +12,7 @@ public class ModlogManager {
         var modlogChannel = guild.getTextChannelById(1073722655628341429L);
 
         var title = buildTitle(report);
-        var description = buildDescriptionString(report);
+        var description = buildReportDescription(report);
         var color =  report.getReportType().getColor();
 
         return modlogChannel.sendMessageEmbeds(EmbedUtils.customWithTimestamp(title, description, color)).complete().getIdLong();
@@ -20,7 +20,7 @@ public class ModlogManager {
 
     public void updateModlogMessage(Message message, Report report) {
         var title = buildTitle(report);
-        var description = buildDescriptionString(report);
+        var description = buildReportDescription(report);
         var color =  report.getReportType().getColor();
 
         message.editMessageEmbeds(EmbedUtils.customWithTimestamp(title, description, color)).complete();
@@ -32,18 +32,18 @@ public class ModlogManager {
         stringBuilder.append(report.getReportType().getName());
 
         if (report.getDuration() != null) {
-            stringBuilder.append(" (");
-            stringBuilder.append(DurationUtils.toReadableDuration(report.getDuration()));
-            stringBuilder.append(")");
+            stringBuilder.append(" (")
+                    .append(DurationUtils.toReadableDuration(report.getDuration()))
+                    .append(")");
         }
 
-        stringBuilder.append(" | ");
-        stringBuilder.append(report.getUser().getAsTag());
+        stringBuilder.append(" | ")
+                .append(report.getUser().getAsTag());
 
         return stringBuilder.toString();
     }
 
-    private String buildDescriptionString(Report report) {
+    private String buildReportDescription(Report report) {
         return  "**Reason**: " + report.getReason() +
                 "\n**User**: " + report.getUser().getAsMention() +
                 "\n**Moderator**: " + report.getModerator().getAsMention();

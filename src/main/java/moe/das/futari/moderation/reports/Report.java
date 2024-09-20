@@ -4,7 +4,6 @@ import moe.das.futari.moderation.PunishmentType;
 import net.dv8tion.jda.api.entities.User;
 
 public class Report {
-
     private final PunishmentType punishmentType;
     private final User user;
     private final User moderator;

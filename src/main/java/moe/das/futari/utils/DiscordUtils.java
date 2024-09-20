@@ -22,7 +22,7 @@ public class DiscordUtils {
     public static Optional<Member> parseStringAsMember(Guild guild, String userString) {
         try {
             var matcher = USER_PATTERN.matcher(userString);
-            matcher.find();
+            if (!matcher.find()) return Optional.empty();
 
             return Optional.of(guild.retrieveMemberById(matcher.group(1)).timeout(2, TimeUnit.SECONDS).complete());
         } catch (Exception exception) {
@@ -33,7 +33,7 @@ public class DiscordUtils {
     public static Optional<User> parseStringAsUser(JDA jda, String userString) {
         try {
             var matcher = USER_PATTERN.matcher(userString);
-            matcher.find();
+            if (!matcher.find()) return Optional.empty();
 
             return Optional.of(jda.retrieveUserById(matcher.group(1)).timeout(2, TimeUnit.SECONDS).complete());
         } catch (Exception exception) {
@@ -53,7 +53,7 @@ public class DiscordUtils {
             try {
                 attachedFiles.add(AttachedFile.fromData(new URL(url).openStream(), DiscordUtils.getFileName(url)));
             } catch (IOException exception) {
-                LOGGER.warn("Could not convert attachment " + url);
+                LOGGER.warn("Could not convert attachment {}", url);
             }
         }
 
