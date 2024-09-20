@@ -36,7 +36,7 @@ public class DatabaseHandler {
             statement.execute("CREATE TABLE IF NOT EXISTS MessageHistory (message_id INTEGER PRIMARY KEY, user_id INTEGER, content TEXT, creation_time INTEGER, attachments TEXT)");
         } catch (SQLException exception) {
             logger.error("Could not create tables", exception);
-            System.exit(-1);
+            System.exit(1);
         }
     }
 
