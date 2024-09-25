@@ -1,6 +1,6 @@
 .idea/
 .gradle/
 build/
-token.txt
+config.yml
 futari.sqlite
 logs/
