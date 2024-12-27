@@ -15,7 +15,7 @@ dependencies {
     implementation("org.xerial:sqlite-jdbc:3.47.1.0")
     implementation("ch.qos.logback:logback-classic:1.5.15")
 
-    implementation("net.dv8tion:JDA:5.2.1") {
+    implementation("net.dv8tion:JDA:5.2.2") {
         exclude("opus-java")
     }
 }
