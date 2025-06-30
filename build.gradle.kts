@@ -12,7 +12,7 @@ repositories {
 
 dependencies {
     implementation("com.zaxxer:HikariCP:6.3.0")
-    implementation("org.xerial:sqlite-jdbc:3.49.1.0")
+    implementation("org.xerial:sqlite-jdbc:3.50.2.0")
     implementation("ch.qos.logback:logback-classic:1.5.18")
 
     implementation("net.dv8tion:JDA:5.5.1") {
